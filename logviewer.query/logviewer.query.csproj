@@ -76,8 +76,14 @@
     <Compile Include="Parsing\CsvParser.cs" />
     <Compile Include="Parsing\JsonParser.cs" />
     <Compile Include="Parsing\TestParser.cs" />
+    <Compile Include="Readers\CsvItemReader.cs" />
+    <Compile Include="Readers\CsvTokenReader.cs" />
+    <Compile Include="Readers\JsonItemReader.cs" />
+    <Compile Include="Readers\JsonTokenReader.cs" />
+    <Compile Include="Readers\LineItemReader.cs" />
+    <Compile Include="Readers\LineTokenReader.cs" />
+    <Compile Include="Readers\LogReader.cs" />
     <Compile Include="SpracheExtensions.cs" />
-    <Compile Include="Types\TokenReader.cs" />
     <Compile Include="QueryFactory.cs" />
     <Compile Include="NodeExtensions.cs" />
     <Compile Include="Types\StringBuffer.cs" />
@@ -90,7 +96,6 @@
     <Compile Include="Interfaces\IVisitor.cs" />
     <Compile Include="Log.cs" />
     <Compile Include="Types\Pattern.cs" />
-    <Compile Include="Types\CountingReader.cs" />
     <Compile Include="Query.cs" />
     <Compile Include="Nodes\AggregateNode.cs" />
     <Compile Include="Nodes\AndNode.cs" />

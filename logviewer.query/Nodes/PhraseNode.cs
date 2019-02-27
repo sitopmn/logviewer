@@ -1,5 +1,6 @@
 ﻿using logviewer.Interfaces;
 using logviewer.query.Interfaces;
+using logviewer.query.Readers;
 using logviewer.query.Types;
 using System;
 using System.Collections.Generic;
@@ -85,7 +86,7 @@ namespace logviewer.query.Nodes
             var nextIsExact = true;
             var tokens = new List<Token>();
             long position = 0;
-            foreach (var token in new TokenReader(pattern, string.Empty, string.Empty, 0, Encoding.Default).ReadAll().Where(t => t.Type == ETokenType.Characters && t.Data.Length >= 3))
+            foreach (var token in new LineTokenReader(pattern).ReadAll().Where(t => t.Type == ETokenType.Characters && t.Data.Length >= 3))
             {
                 if (IsTokenInCapture(pattern, token))
                 {

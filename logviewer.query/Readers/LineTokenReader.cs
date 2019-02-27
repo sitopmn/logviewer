@@ -1,0 +1,288 @@
+﻿using logviewer.Interfaces;
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace logviewer.query.Readers
+{
+    internal class LineTokenReader : LogReader<Token>
+    {
+        /// <summary>
+        /// State for reading buffer
+        /// </summary>
+        private int _state = -1;
+
+        /// <summary>
+        /// Previous character
+        /// </summary>
+        private char _previous;
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="LineTokenReader"/> class
+        /// </summary>
+        /// <param name="stream">Stream providing the source data</param>
+        /// <param name="file">Name of the file</param>
+        /// <param name="member">Name of the archive member if the file is an archive</param>
+        public LineTokenReader(Stream stream, string file, string member)
+            : base(stream, file, member)
+        {
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="LineTokenReader"/> class.
+        /// </summary>
+        /// <param name="line">String to tokenize</param>
+        public LineTokenReader(string line)
+            : base(new MemoryStream(Encoding.Default.GetBytes(line)), string.Empty, string.Empty)
+        {
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="LineTokenReader"/> class.
+        /// </summary>
+        /// <param name="line">String to tokenize</param>
+        public LineTokenReader(string line, string file, string member)
+            : base(new MemoryStream(Encoding.Default.GetBytes(line)), file, member)
+        {
+        }
+
+        /// <summary>
+        /// Reads a single index token
+        /// </summary>
+        /// <returns>The token or default(Token) of no token could be read</returns>
+        public override Token Read()
+        {
+            var buffer = new Token[1];
+            if (Read(buffer, 0, 1) == 0)
+            {
+                return default(Token);
+            }
+            else
+            {
+                return buffer[0];
+            }
+        }
+
+        /// <summary>
+        /// Reads index tokens into a buffer
+        /// </summary>
+        /// <param name="buffer">Buffer to save buffer into</param>
+        /// <param name="offset">Offset of the first token in the buffer</param>
+        /// <param name="count">Number of buffer to read</param>
+        /// <returns>The number of buffer read</returns>
+        public override int Read(Token[] buffer, int offset, int count)
+        {
+            var total = count;
+
+            if (_state < 0)
+            {
+                _state = 0;
+
+                // return the token for the first line
+                buffer[offset++] = CreateNewlineToken();
+                count -= 1;
+            }
+
+            while (count > 0 && !EndOfStream)
+            {
+                var c = (char)ReadChar();
+                var isLetter = char.IsLetter(c);
+                var isDigit = char.IsDigit(c);
+                var isUpper = char.IsUpper(c);
+
+                switch (_state)
+                {
+                    case 0:
+                        if (c == '\n' || c == '\r')
+                        {
+                            _state = c;
+                        }
+                        else if (isLetter || isDigit)
+                        {
+                            _state = 1;
+                            MarkBegin();
+                        }
+                        break;
+
+                    // letter or digits
+                    case 1:
+                        if (c == '\n' || c == '\r') // split on newline
+                        {
+                            if (MarkLength() > 0)
+                            {
+                                buffer[offset++] = CreateCharacterToken();
+                                count -= 1;
+                            }
+
+                            _state = c;
+                        }
+                        else if (isLetter && char.IsDigit(_previous)) // split on change to letters
+                        {
+                            if (MarkLength() > 0)
+                            {
+                                buffer[offset++] = CreateCharacterToken();
+                                count -= 1;
+                            }
+
+                            MarkBegin();
+                        }
+                        else if (isDigit && char.IsLetter(_previous)) // split on change to digits
+                        {
+                            if (MarkLength() > 0)
+                            {
+                                buffer[offset++] = CreateCharacterToken();
+                                count -= 1;
+                            }
+
+                            MarkBegin();
+                        }
+                        else if (isUpper && char.IsLower(_previous)) // split on camel case
+                        {
+                            if (MarkLength() > 0)
+                            {
+                                buffer[offset++] = CreateCharacterToken();
+                                count -= 1;
+                            }
+
+                            MarkBegin();
+                        }
+                        else if (!isLetter && !isDigit)
+                        {
+                            if (MarkLength() > 0)
+                            {
+                                buffer[offset++] = CreateCharacterToken();
+                                count -= 1;
+                            }
+
+                            _state = 0;
+                            MarkBegin();
+                        }
+                        break;
+
+                    // first character of line break is \n
+                    case 10:
+                        if (c == '\r')
+                        {
+                            _state = 14;
+                        }
+                        else if (c == '\n')
+                        {
+                            buffer[offset++] = CreateNewlineToken();
+                            count -= 1;
+                            _state = c;
+                        }
+                        else if (isLetter || isDigit)
+                        {
+                            buffer[offset++] = CreateNewlineToken();
+                            count -= 1;
+                            _state = 1;
+                            MarkBegin();
+                        }
+                        else
+                        {
+                            buffer[offset++] = CreateNewlineToken();
+                            count -= 1;
+                            _state = 0;
+                            MarkBegin();
+                        }
+                        break;
+
+                    // first character of line break is \r
+                    case 13:
+                        if (c == '\n')
+                        {
+                            _state = 14;
+                        }
+                        else if (c == '\r')
+                        {
+                            buffer[offset++] = CreateNewlineToken();
+                            count -= 1;
+                            _state = c;
+                        }
+                        else if (isLetter || isDigit)
+                        {
+                            buffer[offset++] = CreateNewlineToken();
+                            count -= 1;
+                            _state = 1;
+                            MarkBegin();
+                        }
+                        else
+                        {
+                            buffer[offset++] = CreateNewlineToken();
+                            count -= 1;
+                            _state = 0;
+                            MarkBegin();
+                        }
+                        break;
+
+                    // second character of line break
+                    case 14:
+                        buffer[offset++] = CreateNewlineToken();
+                        count -= 1;
+
+                        if (c == '\r' || c == '\n')
+                        {
+                            _state = c;
+                        }
+                        else if (isLetter || isDigit)
+                        {
+                            _state = 1;
+                            MarkBegin();
+                        }
+                        else
+                        {
+                            _state = 0;
+                            MarkBegin();
+                        }
+                        break;
+                }
+
+                _previous = c;
+            }
+
+            if (count > 0 && EndOfStream && MarkLength() > 0 && _state == 1)
+            {
+                buffer[offset++] = CreateCharacterToken();
+                count -= 1;
+            }
+
+            return total - count;
+        }
+
+        /// <summary>
+        /// Create a token from the given data
+        /// </summary>
+        /// <param name="data">The token data</param>
+        /// <param name="file">The file the line was read from</param>
+        /// <param name="member">The archive member the line was read from</param>
+        /// <param name="position">The starting offset of the token</param>
+        /// <returns>A token as specified</returns>
+        private Token CreateCharacterToken()
+        {
+            return new Token()
+            {
+                Type = ETokenType.Characters,
+                Data = MarkEnd(-1),
+                File = File,
+                Member = Member,
+                Position = MarkPosition(),
+                IsExact = true,
+            };
+        }
+
+        /// <summary>
+        /// Creates a newline token
+        /// </summary>
+        /// <param name="file">The file the line was read from</param>
+        /// <param name="member">The archive member the line was read from</param>
+        /// <param name="position">The starting offset of the token</param>
+        /// <returns></returns>
+        private Token CreateNewlineToken()
+        {
+            return new Token() { Type = ETokenType.Line, File = File, Member = Member, Position = Position, IsExact = true };
+        }
+    }
+}

@@ -1,6 +1,10 @@
-﻿using log4net;
+﻿#define NEWREADER
+
+using log4net;
 using logviewer.Interfaces;
 using logviewer.query.Index;
+using logviewer.query.Parsing;
+using logviewer.query.Readers;
 using logviewer.query.Types;
 using System;
 using System.Collections;
@@ -180,22 +184,27 @@ namespace logviewer.query
                         var stream = OpenFileStream(element.Item1, element.Item2, out length);
 
                         // read and tokenize the file
-                        CountingReader streamreader = null;
-                        TokenReader tokenreader = null;
+                        LogReader<Token> tokenreader = null;
+                        var lastProgress = 0L;
 
                         var sw2 = Stopwatch.StartNew();
                         try
                         {
                             var buffer = new Token[1024];
-                            streamreader = new CountingReader(stream, p => progress?.Invoke(Interlocked.Add(ref progressCount, p) * 100.0 / _progressMaximum), cancellationToken);
-                            tokenreader = new TokenReader(streamreader, element.Item1, element.Item2, 0, streamreader.CurrentEncoding);
-
+                            tokenreader = new LineTokenReader(stream, element.Item1, element.Item2);
                             var count = 0;
                             while ((count = tokenreader.Read(buffer, 0, buffer.Length)) > 0)
                             {
                                 for (var i = 0; i < _indexers.Length; i++)
                                 {
                                     _indexers[i].Update(state[i], buffer, count);
+                                }
+                                
+                                if (tokenreader.Position > lastProgress + 256 * 1024)
+                                {
+                                    cancellationToken.ThrowIfCancellationRequested();
+                                    progress?.Invoke(Interlocked.Add(ref progressCount, tokenreader.Position - lastProgress) * 100.0 / _progressMaximum);
+                                    lastProgress = tokenreader.Position;
                                 }
                             }
                         }
@@ -205,10 +214,7 @@ namespace logviewer.query
                             {
                                 tokenreader.Dispose();
                             }
-                            else if (streamreader != null)
-                            {
-                                streamreader.Dispose();
-                            }
+
                             sw2.Stop();
                             _logger.Info($"Log::Read(): Reading {element.Item1}:{element.Item2} completed in {sw2.ElapsedMilliseconds}ms");
                         }
@@ -343,7 +349,9 @@ namespace logviewer.query
                 var readerPosition = 0L;
                 var readerLine = 0;
                 var readerBytes = 0;
-                CountingReader reader = null;
+                LogReader<ILogItem> reader = null;
+                var lastProgress = 0L;
+
                 while (true)
                 {
                     // no more index entries to read
@@ -424,7 +432,7 @@ namespace logviewer.query
                     {
                         try
                         {
-                            reader = new CountingReader(stream, p => progress?.Invoke(p, _progressMaximum), cancellation);
+                            reader = new LineItemReader(stream, readerFile, readerMember);
                         }
                         catch (Exception ex)
                         {
@@ -436,35 +444,23 @@ namespace logviewer.query
                     // the current index entry points to a position further into the file
                     if (indexEnumerator.Current.Position > readerPosition)
                     {
-                        try
-                        {
-                            readerPosition = reader.Seek(indexEnumerator.Current.Position, SeekOrigin.Begin);
-                            readerLine = indexEnumerator.Current.Line;
-                        }
-                        catch (Exception ex)
-                        {
-                            _logger.Error($"Log::Read(): Error while seeking in {indexEnumerator.Current.File}::{indexEnumerator.Current.Member}: {ex.Message}");
-                            break;
-                        }
+                        readerPosition = reader.Seek(indexEnumerator.Current.Position, indexEnumerator.Current.Line, SeekOrigin.Begin);
+                        readerLine = indexEnumerator.Current.Line;
                     }
 
-                    // read the line
-                    string data;
-                    try
-                    {
-                        data = reader.ReadLine(out readerBytes);
-                    }
-                    catch (Exception ex)
-                    {
-                        _logger.Error($"Log::Read(): Error while creating reader for {indexEnumerator.Current.File}::{indexEnumerator.Current.Member}: {ex.Message}");
-                        break;
-                    }
-
-                    // return the log item
-                    yield return new LogItem(data, readerFile, readerMember, readerPosition, readerLine);
+                    // read data
+                    yield return (LogItem)reader.Read();
                     readerPosition += readerBytes;
                     readerLine += 1;
                     linesRead += 1;
+
+                    // check for cancellation and report progress
+                    if (reader.Position > lastProgress + 256 * 1024)
+                    {
+                        cancellation.ThrowIfCancellationRequested();
+                        progress?.Invoke(reader.Position - lastProgress, _progressMaximum);
+                        lastProgress = reader.Position;
+                    }
                 }
             }
             finally

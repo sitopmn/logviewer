@@ -1,5 +1,6 @@
 ﻿using logviewer.Interfaces;
 using logviewer.query.Index;
+using logviewer.query.Readers;
 using logviewer.query.Types;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
@@ -235,9 +236,9 @@ namespace logviewer.test
             for (var i = 0; i < reference.Length; i++) Assert.AreEqual(reference[i], results[i]);
         }
 
-        private static IEnumerable<Token> TokenizeString(string file, string member, string data, long offset = 0)
+        private static IEnumerable<Token> TokenizeString(string file, string member, string data)
         {
-            return new TokenReader(new StringReader(data), file, member, offset, Encoding.Default).ReadAll();
+            return new LineTokenReader(data, file, member).ReadAll();
         }
 
         private void Add(string file, string member, long length, DateTime timestamp, IEnumerable<Token> tokens)

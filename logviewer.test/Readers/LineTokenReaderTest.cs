@@ -1,18 +1,21 @@
-﻿using logviewer.Interfaces;
-using logviewer.query.Types;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+﻿using System;
+using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
+using logviewer.Interfaces;
+using logviewer.query.Readers;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-namespace logviewer.test
+namespace logviewer.test.Readers
 {
     [TestClass]
-    public class TokenReaderTest
+    public class LineTokenReaderTest
     {
         [TestMethod]
         public void SingleTokenReturned()
         {
-            var tokens = new TokenReader("FATAL", string.Empty, string.Empty, 0, Encoding.Default).ReadAll().ToArray();
+            var tokens = ReadTokens("FATAL").ToArray();
             Assert.AreEqual(2, tokens.Length);
             Assert.AreEqual(ETokenType.Line, tokens[0].Type);
             Assert.AreEqual(ETokenType.Characters, tokens[1].Type);
@@ -22,7 +25,7 @@ namespace logviewer.test
         [TestMethod]
         public void MultiTokenTerminatesCorrectly()
         {
-            var tokens = new TokenReader("{time:time} [*ROLL_CHANGING -> ROLL_COMPLETED", string.Empty, string.Empty, 0, Encoding.Default).ReadAll().ToArray();
+            var tokens = ReadTokens("{time:time} [*ROLL_CHANGING -> ROLL_COMPLETED").ToArray();
             Assert.AreEqual(7, tokens.Length);
             Assert.AreEqual(ETokenType.Line, tokens[0].Type);
 
@@ -43,6 +46,15 @@ namespace logviewer.test
 
             Assert.AreEqual(ETokenType.Characters, tokens[6].Type);
             Assert.AreEqual("COMPLETED", tokens[6].Data);
+        }
+
+        private IEnumerable<Token> ReadTokens(string line)
+        {
+            var reader = new LineTokenReader(new MemoryStream(Encoding.Default.GetBytes(line)), string.Empty, string.Empty);
+            while (!reader.EndOfStream)
+            {
+                yield return reader.Read();
+            }
         }
     }
 }
