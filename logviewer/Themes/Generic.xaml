@@ -1,0 +1,95 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:controls="clr-namespace:logviewer.Controls"
+                    xmlns:material="http://materialdesigninxaml.net/winfx/xaml/themes"
+                    xmlns:materialconverters="clr-namespace:MaterialDesignThemes.Wpf.Converters;assembly=MaterialDesignThemes.Wpf"
+                    xmlns:shell="clr-namespace:System.Windows.Shell;assembly=PresentationFramework"
+                    xmlns:system="clr-namespace:System;assembly=mscorlib"
+                    xmlns:util="clr-namespace:logviewer.core;assembly=logviewer.core"
+                    xmlns:v="clr-namespace:logviewer.View">
+    <ResourceDictionary.MergedDictionaries>
+        <ResourceDictionary Source="Themes/MaterialDesignTheme.TabControl.xaml" />
+    </ResourceDictionary.MergedDictionaries>
+
+    <Style TargetType="{x:Type controls:NavigationItem}">
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type controls:NavigationItem}">
+                    <material:Ripple HorizontalContentAlignment="Stretch"
+                                     Feedback="{DynamicResource MaterialDesignBody}"
+                                     Focusable="False">
+                        <Grid>
+                            <Border x:Name="MouseOverBorder"
+                                    Grid.Column="0"
+                                    Grid.ColumnSpan="4"
+                                    Background="{DynamicResource MaterialDesignBody}"
+                                    IsHitTestVisible="False"
+                                    Opacity="0" />
+
+                            <Grid Margin="{TemplateBinding Padding}"
+                                  Background="Transparent">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto"
+                                                      SharedSizeGroup="ButtonGroup1" />
+                                    <ColumnDefinition Width="Auto"
+                                                      SharedSizeGroup="ButtonGroup2" />
+                                </Grid.ColumnDefinitions>
+                                <material:PackIcon Grid.Column="0"
+                                                   Width="24"
+                                                   Height="24"
+                                                   Margin="16 16 0 16"
+                                                   VerticalAlignment="Center"
+                                                   Kind="{TemplateBinding Icon}" />
+                                <TextBlock Grid.Column="1"
+                                           Margin="16 0 0 0"
+                                           VerticalAlignment="Center"
+                                           Style="{DynamicResource MaterialDesignSubheadingTextBlock}"
+                                           Text="{TemplateBinding Label}" />
+                                <Button x:Name="EditButton"
+                                        Grid.Column="2"
+                                        Margin="16 0 0 0"
+                                        VerticalAlignment="Center"
+                                        Command="{TemplateBinding EditCommand}"
+                                        CommandParameter="{TemplateBinding EditCommandParameter}"
+                                        Style="{DynamicResource MaterialDesignToolButton}"
+                                        Visibility="Hidden">
+                                    <material:PackIcon Width="24"
+                                                       Height="24"
+                                                       Kind="Pencil" />
+                                </Button>
+                                <Button x:Name="DeleteButton"
+                                        Grid.Column="3"
+                                        Margin="8 0 16 0"
+                                        VerticalAlignment="Center"
+                                        Command="{TemplateBinding DeleteCommand}"
+                                        CommandParameter="{TemplateBinding DeleteCommandParameter}"
+                                        Style="{DynamicResource MaterialDesignToolButton}"
+                                        Visibility="Hidden">
+                                    <material:PackIcon Width="24"
+                                                       Height="24"
+                                                       Kind="Delete" />
+                                </Button>
+                            </Grid>
+                        </Grid>
+                    </material:Ripple>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="EditButton" Property="Visibility" Value="Visible" />
+                            <Setter TargetName="DeleteButton" Property="Visibility" Value="Visible" />
+                            <Setter TargetName="MouseOverBorder" Property="Opacity" Value="0.1" />
+                        </Trigger>
+                        <Trigger Property="EditCommand" Value="{x:Null}">
+                            <Setter TargetName="EditButton" Property="Visibility" Value="Hidden" />
+                        </Trigger>
+                        <Trigger Property="DeleteCommand" Value="{x:Null}">
+                            <Setter TargetName="DeleteButton" Property="Visibility" Value="Hidden" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+</ResourceDictionary>

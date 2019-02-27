@@ -1,0 +1,112 @@
+﻿<UserControl x:Class="logviewer.View.ChartEditor"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:converter="clr-namespace:logviewer.Converters"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:m="clr-namespace:logviewer.Model"
+             xmlns:material="http://materialdesigninxaml.net/winfx/xaml/themes"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:properties="clr-namespace:logviewer.Properties"
+             xmlns:util="clr-namespace:logviewer.core;assembly=logviewer.core"
+             d:DesignHeight="35"
+             d:DesignWidth="800"
+             mc:Ignorable="d">
+    <UserControl.Resources>
+        <util:EnumToIconConverter x:Key="EnumIconConverter" />
+    </UserControl.Resources>
+    <Grid MinHeight="30"
+          Background="Transparent">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="Auto" />
+            <ColumnDefinition Width="Auto" />
+            <ColumnDefinition Width="Auto" />
+            <ColumnDefinition Width="Auto" />
+            <ColumnDefinition Width="Auto" />
+        </Grid.ColumnDefinitions>
+
+        <ContentControl Grid.Column="1"
+                        Margin="0 0 5 0"
+                        Panel.ZIndex="2"
+                        util:DragDropExtensions.DropCommand="{Binding AddAxisCommand}"
+                        util:DragDropExtensions.DropFormat="ColumnHeader"
+                        util:VisibilityExtensions.IsCollapsed="{Binding Axis, Converter={StaticResource EqualsToBooleanConverter}, ConverterParameter={x:Null}}"
+                        Content="{Binding Axis}">
+            <ContentControl.ContentTemplate>
+                <DataTemplate DataType="{x:Type m:ColumnData}">
+                    <material:Chip Margin="5 0 0 0"
+                                   Command="{Binding DataContext.ToggleAxisCommand, RelativeSource={RelativeSource AncestorType=ContentControl}}"
+                                   Content="{Binding HeaderText}"
+                                   DeleteCommand="{Binding DataContext.RemoveAxisCommand, RelativeSource={RelativeSource AncestorType=ContentControl}}"
+                                   DeleteCommandParameter="{Binding}"
+                                   Foreground="{DynamicResource MaterialDesignBody}"
+                                   IsDeletable="True">
+                        <material:Chip.Icon>
+                            <material:PackIcon Width="24"
+                                               Height="24"
+                                               Kind="{Binding DataContext.AxisType, RelativeSource={RelativeSource AncestorType=UserControl}, Converter={StaticResource EnumIconConverter}, ConverterParameter={x:Type m:VisualizationAxisType}}" />
+                        </material:Chip.Icon>
+                    </material:Chip>
+                </DataTemplate>
+            </ContentControl.ContentTemplate>
+        </ContentControl>
+        <TextBlock Grid.Column="1"
+                   Margin="5 0 5 0"
+                   HorizontalAlignment="Center"
+                   VerticalAlignment="Center"
+                   Panel.ZIndex="1"
+                   util:DragDropExtensions.DropCommand="{Binding AddAxisCommand}"
+                   util:DragDropExtensions.DropFormat="ColumnHeader"
+                   util:VisibilityExtensions.IsVisible="{Binding Axis, Converter={StaticResource EqualsToBooleanConverter}, ConverterParameter={x:Null}}"
+                   FontStyle="Italic"
+                   Foreground="{DynamicResource MaterialDesignBody}"
+                   Opacity=".5"
+                   Text="{x:Static properties:Resources.ChartEditor_AxisDragTarget}" />
+
+        <Rectangle Grid.Column="2"
+                   Width="2"
+                   Height="16"
+                   util:VisibilityExtensions.IsCollapsed="{Binding Axis, Converter={StaticResource EqualsToBooleanConverter}, ConverterParameter={x:Null}}"
+                   Fill="{DynamicResource MaterialDesignBody}"
+                   Opacity=".25" />
+
+        <ItemsControl Grid.Column="3"
+                      AlternationCount="{Binding RelativeSource={RelativeSource Self}, Path=Items.Count}"
+                      ItemsSource="{Binding Series}">
+            <ItemsControl.ItemsPanel>
+                <ItemsPanelTemplate>
+                    <StackPanel Orientation="Horizontal" />
+                </ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
+            <ItemsControl.ItemTemplate>
+                <DataTemplate DataType="{x:Type m:ColumnData}">
+                    <material:Chip Margin="5 0 0 0"
+                                   Command="{Binding DataContext.ToggleSeriesCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                   CommandParameter="{Binding}"
+                                   Content="{Binding HeaderText}"
+                                   DeleteCommand="{Binding DataContext.RemoveSeriesCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                   DeleteCommandParameter="{Binding}"
+                                   Foreground="{DynamicResource MaterialDesignBody}"
+                                   IsDeletable="True">
+                        <material:Chip.Icon>
+                            <material:PackIcon Kind="{Binding Visualization, Converter={StaticResource EnumIconConverter}, ConverterParameter={x:Type m:VisualizationType}}" />
+                        </material:Chip.Icon>
+                    </material:Chip>
+                </DataTemplate>
+            </ItemsControl.ItemTemplate>
+        </ItemsControl>
+
+        <TextBlock Grid.Column="4"
+                   Margin="5 0 0 0"
+                   HorizontalAlignment="Left"
+                   VerticalAlignment="Center"
+                   Panel.ZIndex="1"
+                   util:DragDropExtensions.DropCommand="{Binding AddSeriesCommand}"
+                   util:DragDropExtensions.DropFormat="ColumnHeader"
+                   util:VisibilityExtensions.IsCollapsed="{Binding Axis, Converter={StaticResource EqualsToBooleanConverter}, ConverterParameter={x:Null}}"
+                   FontStyle="Italic"
+                   Foreground="{DynamicResource MaterialDesignBody}"
+                   Opacity=".5"
+                   Text="{x:Static properties:Resources.ChartEditor_SeriesDragTarget}"
+                   TextTrimming="CharacterEllipsis" />
+    </Grid>
+</UserControl>

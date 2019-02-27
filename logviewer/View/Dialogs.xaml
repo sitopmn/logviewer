@@ -1,0 +1,429 @@
+﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:c="clr-namespace:logviewer.Controls"
+                    xmlns:m="clr-namespace:logviewer.Model"
+                    xmlns:markdig="clr-namespace:Markdig.Wpf;assembly=Markdig.Wpf"
+                    xmlns:material="http://materialdesigninxaml.net/winfx/xaml/themes"
+                    xmlns:properties="clr-namespace:logviewer.Properties"
+                    xmlns:system="clr-namespace:System;assembly=mscorlib"
+                    xmlns:util="clr-namespace:logviewer.core;assembly=logviewer.core"
+                    xmlns:vm="clr-namespace:logviewer.ViewModel">
+
+    <DataTemplate DataType="{x:Type vm:DialogDeleteViewModel}">
+        <c:DialogLayout>
+            <c:DialogLayout.HeaderContent>
+                <TextBlock Style="{StaticResource MaterialDesignTitleTextBlock}"
+                           Text="{x:Static properties:Resources.Dialogs_DeleteView}" />
+            </c:DialogLayout.HeaderContent>
+            <c:DialogLayout.DialogContent>
+                <TextBlock Text="{x:Static properties:Resources.Dialogs_DeleteMessage}" />
+            </c:DialogLayout.DialogContent>
+            <c:DialogLayout.ActionContent>
+                <StackPanel HorizontalAlignment="Right"
+                            Orientation="Horizontal">
+                    <Button MinWidth="64"
+                            Margin="0 0 0 0"
+                            Command="{x:Static material:DialogHost.CloseDialogCommand}"
+                            Content="{x:Static properties:Resources.Dialogs_CancelButton}"
+                            IsCancel="True"
+                            Style="{StaticResource MaterialDesignFlatButton}">
+                        <Button.CommandParameter>
+                            <system:Boolean>False</system:Boolean>
+                        </Button.CommandParameter>
+                    </Button>
+                    <Button MinWidth="64"
+                            Margin="8 0 0 0"
+                            Command="{x:Static material:DialogHost.CloseDialogCommand}"
+                            Content="{x:Static properties:Resources.Dialogs_DeleteButton}"
+                            IsDefault="True"
+                            Style="{StaticResource MaterialDesignFlatButton}">
+                        <Button.CommandParameter>
+                            <system:Boolean>True</system:Boolean>
+                        </Button.CommandParameter>
+                    </Button>
+                </StackPanel>
+            </c:DialogLayout.ActionContent>
+        </c:DialogLayout>
+    </DataTemplate>
+
+    <DataTemplate DataType="{x:Type vm:DialogSaveViewModel}">
+        <c:DialogLayout>
+            <c:DialogLayout.HeaderContent>
+                <TextBlock Style="{StaticResource MaterialDesignTitleTextBlock}"
+                           Text="{x:Static properties:Resources.Dialogs_EditPanel}" />
+            </c:DialogLayout.HeaderContent>
+            <c:DialogLayout.DialogContent>
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+                    <TextBox Grid.Row="0"
+                             material:HintAssist.Hint="{x:Static properties:Resources.Dialogs_Title}"
+                             material:HintAssist.IsFloating="True"
+                             Text="{Binding Title, UpdateSourceTrigger=PropertyChanged}" />
+                    <TextBlock Grid.Row="1"
+                               Margin="0 8 0 0"
+                               util:VisibilityExtensions.IsHidden="{Binding IsExisting, Converter={StaticResource BooleanInverter}}"
+                               Foreground="Red"
+                               Text="{x:Static properties:Resources.Dialogs_OverwriteMessage}" />
+                </Grid>
+            </c:DialogLayout.DialogContent>
+            <c:DialogLayout.ActionContent>
+                <StackPanel HorizontalAlignment="Right"
+                            Orientation="Horizontal">
+                    <Button MinWidth="64"
+                            Margin="0 0 0 0"
+                            Command="{x:Static material:DialogHost.CloseDialogCommand}"
+                            Content="{x:Static properties:Resources.Dialogs_CancelButton}"
+                            IsCancel="True"
+                            Style="{StaticResource MaterialDesignFlatButton}">
+                        <Button.CommandParameter>
+                            <system:Boolean>False</system:Boolean>
+                        </Button.CommandParameter>
+                    </Button>
+                    <Button MinWidth="64"
+                            Margin="8 0 0 0"
+                            Command="{x:Static material:DialogHost.CloseDialogCommand}"
+                            Content="{x:Static properties:Resources.Dialogs_SaveButton}"
+                            IsDefault="True"
+                            IsEnabled="{Binding IsComplete}"
+                            Style="{StaticResource MaterialDesignFlatButton}">
+                        <Button.CommandParameter>
+                            <system:Boolean>True</system:Boolean>
+                        </Button.CommandParameter>
+                    </Button>
+                </StackPanel>
+            </c:DialogLayout.ActionContent>
+        </c:DialogLayout>
+    </DataTemplate>
+
+    <DataTemplate x:Key="BookmarkSelectionTemplate">
+        <Border x:Name="Border"
+                Height="56"
+                BorderBrush="{DynamicResource MaterialDesignDivider}"
+                BorderThickness="0 1 0 0">
+            <Grid x:Name="ItemGrid"
+                  Background="Transparent">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"
+                                      SharedSizeGroup="RemoveGroup1" />
+                    <ColumnDefinition Width="*"
+                                      SharedSizeGroup="NameGroup" />
+                    <ColumnDefinition Width="Auto"
+                                      SharedSizeGroup="CopyToLeftGroup" />
+                    <ColumnDefinition Width="Auto"
+                                      SharedSizeGroup="CopyToRightGroup" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto"
+                                      SharedSizeGroup="RemoveGroup2" />
+                </Grid.ColumnDefinitions>
+                <TextBlock Grid.Column="0"
+                           Grid.ColumnSpan="6"
+                           HorizontalAlignment="Center"
+                           VerticalAlignment="Center"
+                           Foreground="{DynamicResource MaterialDesignBodyLight}"
+                           Style="{StaticResource MaterialDesignSubheadingTextBlock}"
+                           Text="{x:Static properties:Resources.Dialogs_BookmarkWillBeRemoved}">
+                    <util:VisibilityExtensions.IsVisible>
+                        <MultiBinding Converter="{StaticResource BooleanAndConverter}">
+                            <Binding Converter="{StaticResource EqualsToBooleanConverter}"
+                                     ConverterParameter="{x:Null}"
+                                     Path="FileContext" />
+                            <Binding Converter="{StaticResource EqualsToBooleanConverter}"
+                                     ConverterParameter="{x:Null}"
+                                     Path="LocalContext" />
+                        </MultiBinding>
+                    </util:VisibilityExtensions.IsVisible>
+                </TextBlock>
+                <Button x:Name="RemoveButton1"
+                        Grid.Column="0"
+                        Margin="8 0 8 0"
+                        VerticalAlignment="Center"
+                        util:VisibilityExtensions.IsHidden="{Binding IsPresentLocally, Converter={StaticResource BooleanInverter}}"
+                        Command="{Binding DataContext.RemoveFromLocalCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                        CommandParameter="{Binding}"
+                        Style="{StaticResource MaterialDesignToolButton}"
+                        ToolTip="{x:Static properties:Resources.Dialogs_RemoveFromLocalStorage}">
+                    <material:PackIcon Width="24"
+                                       Height="24"
+                                       Kind="Trash" />
+                </Button>
+                <TextBlock x:Name="LocalTitle"
+                           Grid.Column="1"
+                           HorizontalAlignment="Left"
+                           VerticalAlignment="Center"
+                           util:VisibilityExtensions.IsHidden="{Binding IsPresentLocally, Converter={StaticResource BooleanInverter}}"
+                           Text="{Binding Title}" />
+                <Button x:Name="CopyLeftButton"
+                        Grid.Column="2"
+                        VerticalAlignment="Center"
+                        util:VisibilityExtensions.IsHidden="{Binding IsPresentInFile, Converter={StaticResource BooleanInverter}}"
+                        Command="{Binding DataContext.CopyFromFileCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                        CommandParameter="{Binding}"
+                        Style="{StaticResource MaterialDesignToolButton}"
+                        ToolTip="{x:Static properties:Resources.Dialogs_CopyFromFile}">
+                    <material:PackIcon Width="24"
+                                       Height="24"
+                                       Kind="ArrowLeft" />
+                </Button>
+                <Button x:Name="CopyRightButton"
+                        Grid.Column="3"
+                        VerticalAlignment="Center"
+                        Command="{Binding DataContext.CopyToFileCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                        CommandParameter="{Binding}"
+                        Style="{StaticResource MaterialDesignToolButton}"
+                        ToolTip="{x:Static properties:Resources.Dialogs_CopyToFile}">
+                    <util:VisibilityExtensions.IsHidden>
+                        <MultiBinding Converter="{StaticResource BooleanOrConverter}">
+                            <Binding Path="DataContext.IsFileReadOnly"
+                                     RelativeSource="{RelativeSource AncestorType=ItemsControl}" />
+                            <Binding Converter="{StaticResource BooleanInverter}"
+                                     Path="IsPresentLocally" />
+                        </MultiBinding>
+                    </util:VisibilityExtensions.IsHidden>
+                    <material:PackIcon Width="24"
+                                       Height="24"
+                                       Kind="ArrowRight" />
+                </Button>
+                <TextBlock x:Name="FileTitle"
+                           Grid.Column="4"
+                           Margin="8 0 16 0"
+                           HorizontalAlignment="Left"
+                           VerticalAlignment="Center"
+                           util:VisibilityExtensions.IsHidden="{Binding IsPresentInFile, Converter={StaticResource BooleanInverter}}"
+                           Text="{Binding Title}" />
+                <Button x:Name="RemoveButton2"
+                        Grid.Column="5"
+                        Margin="0 0 8 0"
+                        VerticalAlignment="Center"
+                        Command="{Binding DataContext.RemoveFromFileCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                        CommandParameter="{Binding}"
+                        Style="{StaticResource MaterialDesignToolButton}"
+                        ToolTip="{x:Static properties:Resources.Dialogs_RemoveFromFile}">
+                    <util:VisibilityExtensions.IsHidden>
+                        <MultiBinding Converter="{StaticResource BooleanOrConverter}">
+                            <Binding Path="DataContext.IsFileReadOnly"
+                                     RelativeSource="{RelativeSource AncestorType=ItemsControl}" />
+                            <Binding Converter="{StaticResource BooleanInverter}"
+                                     Path="IsPresentInFile" />
+                        </MultiBinding>
+                    </util:VisibilityExtensions.IsHidden>
+                    <material:PackIcon Width="24"
+                                       Height="24"
+                                       Kind="Trash" />
+                </Button>
+            </Grid>
+        </Border>
+        <DataTemplate.Triggers>
+            <DataTrigger Binding="{Binding IsMouseOver, ElementName=ItemGrid}"
+                         Value="False">
+                <Setter TargetName="CopyLeftButton" Property="Foreground" Value="{DynamicResource MaterialDesignDivider}" />
+                <Setter TargetName="CopyRightButton" Property="Foreground" Value="{DynamicResource MaterialDesignDivider}" />
+                <Setter TargetName="RemoveButton1" Property="Foreground" Value="{DynamicResource MaterialDesignDivider}" />
+                <Setter TargetName="RemoveButton2" Property="Foreground" Value="{DynamicResource MaterialDesignDivider}" />
+            </DataTrigger>
+            <DataTrigger Binding="{Binding IsContentDifferent}"
+                         Value="True">
+                <Setter TargetName="FileTitle" Property="Foreground" Value="Orange" />
+                <Setter TargetName="LocalTitle" Property="Foreground" Value="Orange" />
+            </DataTrigger>
+            <DataTrigger Binding="{Binding RelativeSource={RelativeSource PreviousData}}"
+                         Value="{x:Null}">
+                <Setter TargetName="Border" Property="BorderThickness" Value="0" />
+            </DataTrigger>
+        </DataTemplate.Triggers>
+    </DataTemplate>
+
+    <DataTemplate DataType="{x:Type vm:DialogManageBookmarksViewModel}">
+        <c:DialogLayout MinWidth="400"
+                        MaxHeight="800"
+                        Grid.IsSharedSizeScope="True">
+            <c:DialogLayout.HeaderContent>
+                <TextBlock Style="{StaticResource MaterialDesignTitleTextBlock}"
+                           Text="{x:Static properties:Resources.Dialogs_ManageBookmarks}" />
+            </c:DialogLayout.HeaderContent>
+            <c:DialogLayout.DialogContent>
+                <Grid Margin="-24 0 -24 0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"
+                                          SharedSizeGroup="RemoveGroup1" />
+                        <ColumnDefinition Width="*"
+                                          SharedSizeGroup="NameGroup" />
+                        <ColumnDefinition Width="Auto"
+                                          SharedSizeGroup="CopyToLeftGroup" />
+                        <ColumnDefinition Width="Auto"
+                                          SharedSizeGroup="CopyToRightGroup" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto"
+                                          SharedSizeGroup="RemoveGroup2" />
+                        <ColumnDefinition Width="24" />
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+                    <TextBlock Grid.Row="0"
+                               Grid.Column="1"
+                               HorizontalAlignment="Center"
+                               VerticalAlignment="Center"
+                               Foreground="{DynamicResource MaterialDesignBodyLight}"
+                               Style="{StaticResource MaterialDesignSubheadingTextBlock}"
+                               Text="{x:Static properties:Resources.Dialogs_Application}" />
+                    <TextBlock Grid.Row="0"
+                               Grid.Column="4"
+                               HorizontalAlignment="Center"
+                               VerticalAlignment="Center"
+                               Foreground="{DynamicResource MaterialDesignBodyLight}"
+                               Style="{StaticResource MaterialDesignSubheadingTextBlock}"
+                               Text="{x:Static properties:Resources.Dialogs_File}" />
+                    <ScrollViewer Grid.Row="1"
+                                  Grid.Column="0"
+                                  Grid.ColumnSpan="7"
+                                  HorizontalScrollBarVisibility="Hidden"
+                                  VerticalScrollBarVisibility="Auto">
+                        <ItemsControl ItemTemplate="{StaticResource BookmarkSelectionTemplate}"
+                                      ItemsSource="{Binding Bookmarks}" />
+                    </ScrollViewer>
+                </Grid>
+            </c:DialogLayout.DialogContent>
+            <c:DialogLayout.ActionContent>
+                <DockPanel LastChildFill="False">
+                    <Button MinWidth="64"
+                            Margin="8 0 0 0"
+                            Command="{x:Static material:DialogHost.CloseDialogCommand}"
+                            Content="{x:Static properties:Resources.Dialogs_SaveButton}"
+                            DockPanel.Dock="Right"
+                            IsDefault="True"
+                            Style="{StaticResource MaterialDesignFlatButton}">
+                        <Button.CommandParameter>
+                            <system:Boolean>True</system:Boolean>
+                        </Button.CommandParameter>
+                    </Button>
+                    <Button MinWidth="64"
+                            Margin="32 0 0 0"
+                            Command="{x:Static material:DialogHost.CloseDialogCommand}"
+                            Content="{x:Static properties:Resources.Dialogs_CancelButton}"
+                            DockPanel.Dock="Right"
+                            IsCancel="True"
+                            Style="{StaticResource MaterialDesignFlatButton}">
+                        <Button.CommandParameter>
+                            <system:Boolean>False</system:Boolean>
+                        </Button.CommandParameter>
+                    </Button>
+                </DockPanel>
+            </c:DialogLayout.ActionContent>
+        </c:DialogLayout>
+    </DataTemplate>
+
+    <DataTemplate DataType="{x:Type vm:DialogHelpViewModel}">
+        <c:DialogLayout Width="800"
+                        Height="800">
+            <c:DialogLayout.Resources>
+                <Style x:Key="{x:Static markdig:Styles.CodeBlockStyleKey}"
+                       TargetType="{x:Type Paragraph}">
+                    <Setter Property="Background" Value="{DynamicResource MaterialDesignPaper}" />
+                    <Setter Property="FontFamily" Value="Consolas, Lucida Sans Typewriter, Courier New" />
+                </Style>
+                <Style x:Key="{x:Static markdig:Styles.CodeStyleKey}"
+                       TargetType="{x:Type Run}">
+                    <Setter Property="Background" Value="{DynamicResource MaterialDesignPaper}" />
+                    <Setter Property="FontFamily" Value="Consolas, Lucida Sans Typewriter, Courier New" />
+                </Style>
+                <Style x:Key="{x:Static markdig:Styles.Heading1StyleKey}"
+                       TargetType="{x:Type Paragraph}">
+                    <Setter Property="FontSize" Value="42" />
+                    <Setter Property="Foreground" Value="{DynamicResource MaterialDesignBody}" />
+                    <Setter Property="FontWeight" Value="Bold" />
+                </Style>
+                <Style x:Key="{x:Static markdig:Styles.Heading2StyleKey}"
+                       TargetType="{x:Type Paragraph}">
+                    <Setter Property="FontSize" Value="20" />
+                    <Setter Property="Foreground" Value="{DynamicResource MaterialDesignBody}" />
+                    <Setter Property="FontWeight" Value="Bold" />
+                </Style>
+                <Style x:Key="{x:Static markdig:Styles.Heading3StyleKey}"
+                       TargetType="{x:Type Paragraph}">
+                    <Setter Property="FontSize" Value="18" />
+                    <Setter Property="Foreground" Value="{DynamicResource MaterialDesignBody}" />
+                    <Setter Property="FontWeight" Value="Bold" />
+                </Style>
+                <Style x:Key="{x:Static markdig:Styles.Heading4StyleKey}"
+                       TargetType="{x:Type Paragraph}">
+                    <Setter Property="FontSize" Value="18" />
+                    <Setter Property="Foreground" Value="{DynamicResource MaterialDesignBody}" />
+                    <Setter Property="FontWeight" Value="Light" />
+                    <Setter Property="TextDecorations" Value="Underline" />
+                </Style>
+                <Style x:Key="{x:Static markdig:Styles.TableStyleKey}"
+                       TargetType="{x:Type Table}">
+                    <Setter Property="BorderBrush" Value="{DynamicResource MaterialDesignDivider}" />
+                    <Setter Property="BorderThickness" Value="0 0 1 1" />
+                    <Setter Property="CellSpacing" Value="0" />
+                </Style>
+                <Style x:Key="{x:Static markdig:Styles.TableCellStyleKey}"
+                       TargetType="{x:Type TableCell}">
+                    <Setter Property="BorderBrush" Value="{DynamicResource MaterialDesignDivider}" />
+                    <Setter Property="BorderThickness" Value="1 1 0 0" />
+                </Style>
+                <Style x:Key="{x:Static markdig:Styles.ThematicBreakStyleKey}"
+                       TargetType="{x:Type Line}">
+                    <Setter Property="Stretch" Value="Fill" />
+                    <Setter Property="Stroke" Value="{DynamicResource MaterialDesignDivider}" />
+                </Style>
+            </c:DialogLayout.Resources>
+            <c:DialogLayout.HeaderContent>
+                <Grid>
+                    <TextBlock HorizontalAlignment="Left"
+                               Style="{StaticResource MaterialDesignTitleTextBlock}"
+                               Text="{x:Static properties:Resources.Dialogs_Help}" />
+                    <TextBlock HorizontalAlignment="Right"
+                               Style="{StaticResource MaterialDesignTitleTextBlock}"
+                               Text="{Binding Version, StringFormat=LOGVIEWER {0}}" />
+                </Grid>
+            </c:DialogLayout.HeaderContent>
+            <c:DialogLayout.DialogContent>
+                <c:MaterialTabControl Margin="-24 0 -24 0"
+                                      HeaderForeground="{DynamicResource PrimaryHueMidBrush}">
+                    <TabItem>
+                        <TabItem.Header>
+                            <TextBlock Margin="8 0 8 0"
+                                       HorizontalAlignment="Center"
+                                       VerticalAlignment="Center"
+                                       Style="{StaticResource MaterialDesignBody2TextBlock}"
+                                       Text="{x:Static properties:Resources.Dialogs_Documentation}" />
+                        </TabItem.Header>
+                        <markdig:MarkdownViewer Foreground="{DynamicResource MaterialDesignBody}"
+                                                Markdown="{Binding Help}" />
+                    </TabItem>
+                    <TabItem>
+                        <TabItem.Header>
+                            <TextBlock Margin="8 0 8 0"
+                                       HorizontalAlignment="Center"
+                                       VerticalAlignment="Center"
+                                       Style="{StaticResource MaterialDesignBody2TextBlock}"
+                                       Text="{x:Static properties:Resources.Dialogs_Licensing}" />
+                        </TabItem.Header>
+                        <markdig:MarkdownViewer Foreground="{DynamicResource MaterialDesignBody}"
+                                                Markdown="{Binding License}" />
+                    </TabItem>
+                </c:MaterialTabControl>
+            </c:DialogLayout.DialogContent>
+            <c:DialogLayout.ActionContent>
+                <DockPanel LastChildFill="False">
+                    <Button MinWidth="64"
+                            Command="{x:Static material:DialogHost.CloseDialogCommand}"
+                            Content="{x:Static properties:Resources.Dialogs_CloseButton}"
+                            DockPanel.Dock="Right"
+                            IsCancel="True"
+                            Style="{StaticResource MaterialDesignFlatButton}">
+                        <Button.CommandParameter>
+                            <system:Boolean>False</system:Boolean>
+                        </Button.CommandParameter>
+                    </Button>
+                </DockPanel>
+            </c:DialogLayout.ActionContent>
+        </c:DialogLayout>
+    </DataTemplate>
+
+</ResourceDictionary>

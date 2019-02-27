@@ -1,0 +1,279 @@
+﻿<UserControl x:Class="logviewer.View.Navigation"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:controls="clr-namespace:logviewer.Controls"
+             xmlns:converters="clr-namespace:logviewer.Converters"
+             xmlns:core="clr-namespace:logviewer.Model;assembly=logviewer.core"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:m="clr-namespace:logviewer.Model"
+             xmlns:material="http://materialdesigninxaml.net/winfx/xaml/themes"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:properties="clr-namespace:logviewer.Properties"
+             xmlns:sys="clr-namespace:System;assembly=mscorlib"
+             xmlns:util="clr-namespace:logviewer.core;assembly=logviewer.core"
+             Width="400"
+             d:DesignHeight="450"
+             d:DesignWidth="400"
+             Loaded="UserControl_Loaded"
+             mc:Ignorable="d">
+    <UserControl.Resources>
+        <converters:BookmarkIconConverter x:Key="BookmarkIconConverter" />
+    </UserControl.Resources>
+    <Grid Grid.IsSharedSizeScope="True"
+          WindowChrome.IsHitTestVisibleInChrome="True">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="40" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+        <StackPanel Grid.Row="0"
+                    Margin="16 0 0 0"
+                    Orientation="Horizontal">
+            <TextBlock Margin="0 0 8 0"
+                       VerticalAlignment="Center"
+                       Style="{StaticResource MaterialDesignTitleTextBlock}"
+                       Text="{Binding Title, RelativeSource={RelativeSource AncestorType=Window}, FallbackValue=LOG VIEWER}" />
+            <Button Margin="8 0 0 0"
+                    Command="{Binding OpenCommand}"
+                    Foreground="{DynamicResource MaterialDesignBody}"
+                    Style="{StaticResource MaterialDesignToolButton}"
+                    ToolTip="{x:Static properties:Resources.Menu_OpenLogFiles}">
+                <material:PackIcon Width="24"
+                                   Height="24"
+                                   Kind="FolderOpen" />
+            </Button>
+            <Button Margin="8 0 0 0"
+                    Command="{Binding ManageBookmarksCommand}"
+                    Foreground="{DynamicResource MaterialDesignBody}"
+                    Style="{StaticResource MaterialDesignToolButton}"
+                    ToolTip="{x:Static properties:Resources.Menu_ManageBookmarks}">
+                <material:PackIcon Width="24"
+                                   Height="24"
+                                   Kind="BookmarkTick" />
+            </Button>
+            <Button Margin="8 0 0 0"
+                    Click="ShowHelpButton_Click"
+                    Command="{Binding ShowHelpCommand}"
+                    Foreground="{DynamicResource MaterialDesignBody}"
+                    Style="{StaticResource MaterialDesignToolButton}"
+                    ToolTip="{x:Static properties:Resources.Menu_Help}">
+                <material:PackIcon Width="24"
+                                   Height="24"
+                                   Kind="Help" />
+            </Button>
+        </StackPanel>
+        <ToggleButton Grid.Row="0"
+                      Width="32"
+                      Height="32"
+                      Margin="0 0 8 0"
+                      HorizontalAlignment="Right"
+                      Cursor="Hand"
+                      IsChecked="{Binding IsLeftDrawerOpen, RelativeSource={RelativeSource AncestorType=material:DrawerHost}}"
+                      Style="{StaticResource MaterialDesignHamburgerToggleButton}" />
+        <ScrollViewer Grid.Row="1"
+                      VerticalScrollBarVisibility="Auto">
+            <StackPanel Orientation="Vertical">
+                <ItemsControl ItemsSource="{Binding Pages}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <StackPanel Orientation="Vertical" />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate DataType="{x:Type core:Context}">
+                            <controls:NavigationItem Command="{Binding DataContext.ReplaceTabCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                     CommandParameter="{Binding}"
+                                                     Icon="{Binding Icon}"
+                                                     Label="{Binding Title}" />
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+                <Expander IsExpanded="False">
+                    <Expander.Header>
+                        <StackPanel Margin="-8 0 0 0"
+                                    Orientation="Horizontal">
+                            <material:PackIcon Width="24"
+                                               Height="24"
+                                               VerticalAlignment="Center"
+                                               Kind="Settings" />
+                            <TextBlock Margin="16 0 0 0"
+                                       VerticalAlignment="Center"
+                                       Style="{DynamicResource MaterialDesignSubheadingTextBlock}"
+                                       Text="{x:Static properties:Resources.Menu_Settings}" />
+                        </StackPanel>
+                    </Expander.Header>
+                    <Grid Margin="32 0 16 16">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition />
+                            <RowDefinition />
+                            <RowDefinition />
+                            <RowDefinition />
+                            <RowDefinition />
+                            <RowDefinition />
+                        </Grid.RowDefinitions>
+                        <CheckBox Grid.Row="0"
+                                  Grid.Column="0"
+                                  Grid.ColumnSpan="2"
+                                  Content="{x:Static properties:Resources.Menu_UseDarkColorScheme}"
+                                  IsChecked="{Binding UseDarkColorScheme}" />
+                        <CheckBox Grid.Row="1"
+                                  Grid.Column="0"
+                                  Grid.ColumnSpan="2"
+                                  Margin="0 8 0 0"
+                                  Content="{x:Static properties:Resources.Menu_OpenInNewTab}"
+                                  IsChecked="{Binding OpenInNewTab}" />
+                        <!--
+                        <CheckBox Grid.Row="2"
+                                  Grid.Column="0"
+                                  Grid.ColumnSpan="2"
+                                  Margin="0 8 0 0"
+                                  Content="{x:Static properties:Resources.Menu_MonitorLogFiles}"
+                                  IsChecked="{Binding MonitorLogFiles}" />
+                        -->
+                        <Label Grid.Row="3"
+                               Grid.Column="0"
+                               Grid.ColumnSpan="2"
+                               Margin="0 8 0 0"
+                               Content="{x:Static properties:Resources.Menu_BookmarkRepository}" />
+                        <Button Grid.Row="4"
+                                Grid.ColumnSpan="2"
+                                Margin="0 0 4 0"
+                                util:VisibilityExtensions.IsVisible="{Binding BookmarkRepositoryFile, Converter={StaticResource EqualsToBooleanConverter}, ConverterParameter={x:Static sys:String.Empty}}"
+                                Command="{Binding SelectBookmarkRepositoryCommand}"
+                                Content="{x:Static properties:Resources.Menu_SelectBookmarkRepositoryFile}"
+                                Style="{StaticResource MaterialDesignFlatButton}" />
+                        <Grid Grid.Row="4"
+                              Grid.ColumnSpan="2"
+                              Margin="15 0 4 0"
+                              util:VisibilityExtensions.IsHidden="{Binding BookmarkRepositoryFile, Converter={StaticResource EqualsToBooleanConverter}, ConverterParameter={x:Static sys:String.Empty}}">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0"
+                                       VerticalAlignment="Center"
+                                       Foreground="{DynamicResource MaterialDesignBodyLight}"
+                                       Style="{StaticResource MaterialDesignCaptionTextBlock}"
+                                       Text="{Binding BookmarkRepositoryFile}"
+                                       TextTrimming="CharacterEllipsis"
+                                       TextWrapping="NoWrap" />
+                            <Button Grid.Column="1"
+                                    VerticalAlignment="Center"
+                                    Command="{Binding ClearBookmarkRepositoryCommand}"
+                                    Style="{StaticResource MaterialDesignToolButton}"
+                                    ToolTip="{x:Static properties:Resources.Menu_ClearBookmarkRepositoryFile}">
+                                <material:PackIcon Width="24"
+                                                   Height="24"
+                                                   Kind="Clear" />
+                            </Button>
+                        </Grid>
+
+
+                    </Grid>
+                </Expander>
+                <Separator Background="{DynamicResource MaterialDesignDivider}" />
+                <Grid x:Name="SearchBookmarkGrid"
+                      Margin="16 8 16 8">
+                    <Grid.Resources>
+                        <Storyboard x:Key="SearchBookmarkShowAnimation"
+                                    Completed="Storyboard_Completed">
+                            <DoubleAnimation Storyboard.Target="{Binding ElementName=SearchBookmarkTextBox}"
+                                             Storyboard.TargetProperty="Opacity"
+                                             To="1"
+                                             Duration="00:00:00.2" />
+                            <ObjectAnimationUsingKeyFrames Storyboard.Target="{Binding ElementName=SearchBookmarkTextBox}"
+                                                           Storyboard.TargetProperty="Visibility">
+                                <DiscreteObjectKeyFrame KeyTime="00:00:00.0"
+                                                        Value="{x:Static Visibility.Visible}" />
+                            </ObjectAnimationUsingKeyFrames>
+                            <DoubleAnimation Storyboard.Target="{Binding ElementName=BookmarkLabel}"
+                                             Storyboard.TargetProperty="Opacity"
+                                             To="0"
+                                             Duration="00:00:00.2" />
+                            <ObjectAnimationUsingKeyFrames Storyboard.Target="{Binding ElementName=BookmarkLabel}"
+                                                           Storyboard.TargetProperty="Visibility">
+                                <DiscreteObjectKeyFrame KeyTime="00:00:00.2"
+                                                        Value="{x:Static Visibility.Hidden}" />
+                            </ObjectAnimationUsingKeyFrames>
+                        </Storyboard>
+                        <Storyboard x:Key="SearchBookmarkHideAnimation">
+                            <DoubleAnimation Storyboard.Target="{Binding ElementName=SearchBookmarkTextBox}"
+                                             Storyboard.TargetProperty="Opacity"
+                                             To="0"
+                                             Duration="00:00:00.2" />
+                            <ObjectAnimationUsingKeyFrames Storyboard.Target="{Binding ElementName=SearchBookmarkTextBox}"
+                                                           Storyboard.TargetProperty="Visibility">
+                                <DiscreteObjectKeyFrame KeyTime="00:00:00.2"
+                                                        Value="{x:Static Visibility.Hidden}" />
+                            </ObjectAnimationUsingKeyFrames>
+                            <DoubleAnimation Storyboard.Target="{Binding ElementName=BookmarkLabel}"
+                                             Storyboard.TargetProperty="Opacity"
+                                             To="1"
+                                             Duration="00:00:00.2" />
+                            <ObjectAnimationUsingKeyFrames Storyboard.Target="{Binding ElementName=BookmarkLabel}"
+                                                           Storyboard.TargetProperty="Visibility">
+                                <DiscreteObjectKeyFrame KeyTime="00:00:00.0"
+                                                        Value="{x:Static Visibility.Visible}" />
+                            </ObjectAnimationUsingKeyFrames>
+                        </Storyboard>
+                    </Grid.Resources>
+                    <TextBlock x:Name="BookmarkLabel"
+                               VerticalAlignment="Center"
+                               Foreground="{DynamicResource MaterialDesignDivider}"
+                               Opacity="1"
+                               Style="{StaticResource MaterialDesignSubheadingTextBlock}"
+                               Text="{x:Static properties:Resources.Menu_Bookmarks}" />
+                    <TextBox x:Name="SearchBookmarkTextBox"
+                             Margin="0 0 40 0"
+                             VerticalAlignment="Center"
+                             material:HintAssist.Hint="{x:Static properties:Resources.Menu_FindBookmark}"
+                             KeyUp="SearchBookmarkTextBox_KeyUp"
+                             Opacity="0"
+                             Visibility="Hidden" />
+                    <ToggleButton x:Name="SearchBookmarkToggle"
+                                  HorizontalAlignment="Right"
+                                  VerticalAlignment="Center"
+                                  Checked="SearchBookmarkToggle_Checked"
+                                  Style="{StaticResource MaterialDesignToolToggleButton}"
+                                  ToolTip="{x:Static properties:Resources.Menu_FindBookmark}"
+                                  Unchecked="SearchBookmarkToggle_Unchecked">
+                        <material:PackIcon Width="24"
+                                           Height="24"
+                                           Kind="Magnify" />
+                    </ToggleButton>
+                </Grid>
+                <ItemsControl x:Name="BookmarksItemsControl"
+                              ItemsSource="{Binding Bookmarks}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate DataType="{x:Type core:Context}">
+                            <controls:NavigationItem Command="{Binding DataContext.ReplaceTabCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                     CommandParameter="{Binding}"
+                                                     DeleteCommand="{Binding DataContext.DeleteCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                     DeleteCommandParameter="{Binding}"
+                                                     EditCommand="{Binding DataContext.EditCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                     EditCommandParameter="{Binding}"
+                                                     Icon="{Binding Converter={StaticResource BookmarkIconConverter}}"
+                                                     Label="{Binding Title}" />
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </StackPanel>
+        </ScrollViewer>
+        <Button Grid.Row="1"
+                Grid.RowSpan="2"
+                Margin="0 0 24 16"
+                HorizontalAlignment="Right"
+                VerticalAlignment="Bottom"
+                Command="{Binding SaveCommand}"
+                Style="{StaticResource MaterialDesignFloatingActionButton}"
+                ToolTip="{x:Static properties:Resources.Menu_AddBookmark}">
+            <material:PackIcon Width="24"
+                               Height="24"
+                               Kind="BookmarkPlus" />
+        </Button>
+    </Grid>
+</UserControl>

@@ -1,0 +1,414 @@
+﻿<UserControl x:Class="logviewer.View.ChartViewer"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:charts="clr-namespace:logviewer.charts;assembly=logviewer.charts"
+             xmlns:converters="clr-namespace:logviewer.Converters"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:m="clr-namespace:logviewer.Model"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:util="clr-namespace:logviewer.core;assembly=logviewer.core"
+             xmlns:v="clr-namespace:logviewer.View"
+             d:DesignHeight="450"
+             d:DesignWidth="800"
+             mc:Ignorable="d">
+    <UserControl.Resources>
+        <converters:LabelListConverter x:Key="LabelListConverter" />
+        <converters:SampleListConverter x:Key="SampleListConverter" />
+        <converters:CategoryListConverter x:Key="CategoryListConverter" />
+        <converters:TickFormatConverter x:Key="TickFormatConverter" />
+
+        <ControlTemplate x:Key="LinearChartTemplate">
+            <Grid util:VisibilityExtensions.IsCollapsed="{Binding Axis, Converter={StaticResource EqualsToBooleanConverter}, ConverterParameter={x:Null}}">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"
+                                      SharedSizeGroup="YLabelGroup" />
+                    <ColumnDefinition Width="Auto"
+                                      SharedSizeGroup="YAxisGroup" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+                <Grid.Resources>
+                    <util:BindingProxy x:Key="XAxisProxy"
+                                       Data="{Binding ElementName=XAxis}" />
+                    <DataTemplate x:Key="LineSeriesTemplate"
+                                  DataType="{x:Type m:ColumnData}">
+                        <Grid Margin="0 5 0 0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"
+                                                  SharedSizeGroup="YLabelGroup" />
+                                <ColumnDefinition Width="Auto"
+                                                  SharedSizeGroup="YAxisGroup" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0"
+                                       Margin="0 0 5 0"
+                                       VerticalAlignment="Center"
+                                       Foreground="{StaticResource MaterialDesignBodyLight}"
+                                       Text="{Binding HeaderText}">
+                                <TextBlock.LayoutTransform>
+                                    <RotateTransform Angle="-90" />
+                                </TextBlock.LayoutTransform>
+                            </TextBlock>
+                            <charts:LinearAxis x:Name="YAxis"
+                                               Grid.Column="1"
+                                               Foreground="{DynamicResource MaterialDesignBody}"
+                                               Orientation="Vertical">
+                                <charts:LinearAxis.Labels>
+                                    <MultiBinding Converter="{StaticResource LabelListConverter}"
+                                                  ConverterParameter="True">
+                                        <Binding Path="DataContext.Data"
+                                                 RelativeSource="{RelativeSource AncestorType=ItemsControl}" />
+                                        <Binding FallbackValue="{x:Null}"
+                                                 Path="" />
+                                        <Binding Path="DataContext.Data.Count"
+                                                 RelativeSource="{RelativeSource AncestorType=ItemsControl}" />
+                                    </MultiBinding>
+                                </charts:LinearAxis.Labels>
+                            </charts:LinearAxis>
+                            <charts:LineSeries Grid.Column="2"
+                                               AxisX="{Binding Data, Source={StaticResource XAxisProxy}}"
+                                               AxisY="{Binding ElementName=YAxis}"
+                                               Foreground="{DynamicResource PrimaryHueMidBrush}"
+                                               LineThickness="2"
+                                               MouseDoubleClick="Series_MouseDoubleClick"
+                                               MouseLeave="Series_MouseLeave"
+                                               MouseMove="Series_MouseMove">
+                                <charts:LineSeries.Data>
+                                    <MultiBinding Converter="{StaticResource SampleListConverter}">
+                                        <Binding Path="DataContext.Data"
+                                                 RelativeSource="{RelativeSource AncestorType=ItemsControl}" />
+                                        <Binding Path="DataContext.Axis"
+                                                 RelativeSource="{RelativeSource AncestorType=ItemsControl}" />
+                                        <Binding Path="" />
+                                        <Binding Path="DataContext.Data.Count"
+                                                 RelativeSource="{RelativeSource AncestorType=ItemsControl}" />
+                                    </MultiBinding>
+                                </charts:LineSeries.Data>
+                            </charts:LineSeries>
+                        </Grid>
+                    </DataTemplate>
+
+                    <DataTemplate x:Key="StepSeriesTemplate"
+                                  DataType="{x:Type m:ColumnData}">
+                        <Grid Margin="0 5 0 0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"
+                                                  SharedSizeGroup="YLabelGroup" />
+                                <ColumnDefinition Width="Auto"
+                                                  SharedSizeGroup="YAxisGroup" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0"
+                                       Margin="0 0 5 0"
+                                       VerticalAlignment="Center"
+                                       Foreground="{StaticResource MaterialDesignBodyLight}"
+                                       Text="{Binding HeaderText}">
+                                <TextBlock.LayoutTransform>
+                                    <RotateTransform Angle="-90" />
+                                </TextBlock.LayoutTransform>
+                            </TextBlock>
+                            <charts:LinearAxis x:Name="YAxis"
+                                               Grid.Column="1"
+                                               Foreground="{DynamicResource MaterialDesignBody}"
+                                               Orientation="Vertical">
+                                <charts:LinearAxis.Labels>
+                                    <MultiBinding Converter="{StaticResource LabelListConverter}"
+                                                  ConverterParameter="True">
+                                        <Binding Path="DataContext.Data"
+                                                 RelativeSource="{RelativeSource AncestorType=ItemsControl}" />
+                                        <Binding FallbackValue="{x:Null}"
+                                                 Path="" />
+                                        <Binding Path="DataContext.Data.Count"
+                                                 RelativeSource="{RelativeSource AncestorType=ItemsControl}" />
+                                    </MultiBinding>
+                                </charts:LinearAxis.Labels>
+                            </charts:LinearAxis>
+                            <charts:StepSeries Grid.Column="2"
+                                               AxisX="{Binding Data, Source={StaticResource XAxisProxy}}"
+                                               AxisY="{Binding ElementName=YAxis}"
+                                               Foreground="{DynamicResource PrimaryHueMidBrush}"
+                                               LineThickness="2"
+                                               MouseDoubleClick="Series_MouseDoubleClick"
+                                               MouseLeave="Series_MouseLeave"
+                                               MouseMove="Series_MouseMove">
+                                <charts:StepSeries.Data>
+                                    <MultiBinding Converter="{StaticResource SampleListConverter}">
+                                        <Binding Path="DataContext.Data"
+                                                 RelativeSource="{RelativeSource AncestorType=ItemsControl}" />
+                                        <Binding Path="DataContext.Axis"
+                                                 RelativeSource="{RelativeSource AncestorType=ItemsControl}" />
+                                        <Binding Path="" />
+                                        <Binding Path="DataContext.Data.Count"
+                                                 RelativeSource="{RelativeSource AncestorType=ItemsControl}" />
+                                    </MultiBinding>
+                                </charts:StepSeries.Data>
+                            </charts:StepSeries>
+                        </Grid>
+                    </DataTemplate>
+
+                    <DataTemplate x:Key="ScatterSeriesTemplate"
+                                  DataType="{x:Type m:ColumnData}">
+                        <Grid Margin="0 5 0 0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"
+                                                  SharedSizeGroup="YLabelGroup" />
+                                <ColumnDefinition Width="Auto"
+                                                  SharedSizeGroup="YAxisGroup" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0"
+                                       Margin="0 0 5 0"
+                                       VerticalAlignment="Center"
+                                       Foreground="{StaticResource MaterialDesignBodyLight}"
+                                       Text="{Binding HeaderText}">
+                                <TextBlock.LayoutTransform>
+                                    <RotateTransform Angle="-90" />
+                                </TextBlock.LayoutTransform>
+                            </TextBlock>
+                            <charts:LinearAxis x:Name="YAxis"
+                                               Grid.Column="1"
+                                               Foreground="{DynamicResource MaterialDesignBody}"
+                                               Orientation="Vertical"
+                                               TickFormat="{Binding Converter={StaticResource TickFormatConverter}}">
+                                <charts:LinearAxis.Labels>
+                                    <MultiBinding Converter="{StaticResource LabelListConverter}"
+                                                  ConverterParameter="True">
+                                        <Binding Path="DataContext.Data"
+                                                 RelativeSource="{RelativeSource AncestorType=ItemsControl}" />
+                                        <Binding FallbackValue="{x:Null}"
+                                                 Path="" />
+                                        <Binding Path="DataContext.Data.Count"
+                                                 RelativeSource="{RelativeSource AncestorType=ItemsControl}" />
+                                    </MultiBinding>
+                                </charts:LinearAxis.Labels>
+                            </charts:LinearAxis>
+                            <charts:PointSeries Grid.Column="2"
+                                                AxisX="{Binding Data, Source={StaticResource XAxisProxy}}"
+                                                AxisY="{Binding ElementName=YAxis}"
+                                                Foreground="{DynamicResource PrimaryHueMidBrush}"
+                                                MouseDoubleClick="Series_MouseDoubleClick"
+                                                MouseLeave="Series_MouseLeave"
+                                                MouseMove="Series_MouseMove"
+                                                PointRadius="1.5">
+                                <charts:PointSeries.Data>
+                                    <MultiBinding Converter="{StaticResource SampleListConverter}">
+                                        <Binding Path="DataContext.Data"
+                                                 RelativeSource="{RelativeSource AncestorType=ItemsControl}" />
+                                        <Binding Path="DataContext.Axis"
+                                                 RelativeSource="{RelativeSource AncestorType=ItemsControl}" />
+                                        <Binding Path="" />
+                                        <Binding Path="DataContext.Data.Count"
+                                                 RelativeSource="{RelativeSource AncestorType=ItemsControl}" />
+                                    </MultiBinding>
+                                </charts:PointSeries.Data>
+                            </charts:PointSeries>
+                        </Grid>
+                    </DataTemplate>
+
+                    <DataTemplate x:Key="ColumnSeriesTemplate"
+                                  DataType="{x:Type m:ColumnData}">
+                        <Grid Margin="0 5 0 0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"
+                                                  SharedSizeGroup="YLabelGroup" />
+                                <ColumnDefinition Width="Auto"
+                                                  SharedSizeGroup="YAxisGroup" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0"
+                                       Margin="0 0 5 0"
+                                       VerticalAlignment="Center"
+                                       Foreground="{StaticResource MaterialDesignBodyLight}"
+                                       Text="{Binding HeaderText}">
+                                <TextBlock.LayoutTransform>
+                                    <RotateTransform Angle="-90" />
+                                </TextBlock.LayoutTransform>
+                            </TextBlock>
+                            <charts:LinearAxis x:Name="YAxis"
+                                               Grid.Column="1"
+                                               Foreground="{DynamicResource MaterialDesignBody}"
+                                               Orientation="Vertical"
+                                               TickFormat="{Binding Converter={StaticResource TickFormatConverter}}">
+                                <charts:LinearAxis.Labels>
+                                    <MultiBinding Converter="{StaticResource LabelListConverter}"
+                                                  ConverterParameter="True">
+                                        <Binding Path="DataContext.Data"
+                                                 RelativeSource="{RelativeSource AncestorType=ItemsControl}" />
+                                        <Binding FallbackValue="{x:Null}"
+                                                 Path="" />
+                                        <Binding Path="DataContext.Data.Count"
+                                                 RelativeSource="{RelativeSource AncestorType=ItemsControl}" />
+                                    </MultiBinding>
+                                </charts:LinearAxis.Labels>
+                            </charts:LinearAxis>
+                            <charts:ColumnSeries Grid.Column="2"
+                                                 AxisX="{Binding Data, Source={StaticResource XAxisProxy}}"
+                                                 AxisY="{Binding ElementName=YAxis}"
+                                                 Foreground="{DynamicResource PrimaryHueMidBrush}"
+                                                 MouseDoubleClick="Series_MouseDoubleClick"
+                                                 MouseLeave="Series_MouseLeave"
+                                                 MouseMove="Series_MouseMove">
+                                <charts:ColumnSeries.Data>
+                                    <MultiBinding Converter="{StaticResource SampleListConverter}">
+                                        <Binding Path="DataContext.Data"
+                                                 RelativeSource="{RelativeSource AncestorType=ItemsControl}" />
+                                        <Binding Path="DataContext.Axis"
+                                                 RelativeSource="{RelativeSource AncestorType=ItemsControl}" />
+                                        <Binding Path="" />
+                                        <Binding Path="DataContext.Data.Count"
+                                                 RelativeSource="{RelativeSource AncestorType=ItemsControl}" />
+                                    </MultiBinding>
+                                </charts:ColumnSeries.Data>
+                            </charts:ColumnSeries>
+                        </Grid>
+                    </DataTemplate>
+
+                    <converters:ChartTemplateSelector x:Key="SeriesTemplateSelector"
+                                                      ColumnTemplate="{StaticResource ColumnSeriesTemplate}"
+                                                      LineTemplate="{StaticResource LineSeriesTemplate}"
+                                                      ScatterTemplate="{StaticResource ScatterSeriesTemplate}"
+                                                      StepTemplate="{StaticResource StepSeriesTemplate}" />
+
+                </Grid.Resources>
+                <ItemsControl Grid.Row="0"
+                              Grid.Column="0"
+                              Grid.ColumnSpan="3"
+                              ItemTemplateSelector="{StaticResource SeriesTemplateSelector}"
+                              ItemsSource="{Binding Series}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <StackPanel Orientation="Vertical" />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemContainerStyle>
+                        <Style>
+                            <Setter Property="Control.Margin" Value="0 5 0 5" />
+                        </Style>
+                    </ItemsControl.ItemContainerStyle>
+                </ItemsControl>
+                <Canvas x:Name="CursorCanvas"
+                        Grid.Row="0"
+                        Grid.Column="2"
+                        Margin="0 10 0 5">
+                    <Line util:VisibilityExtensions.IsVisible="{Binding CursorVisible, RelativeSource={RelativeSource AncestorType=v:ChartViewer}}"
+                          IsHitTestVisible="False"
+                          Opacity="0.5"
+                          Stroke="{DynamicResource SecondaryAccentBrush}"
+                          StrokeThickness="2"
+                          X1="{Binding CursorPositionX, RelativeSource={RelativeSource AncestorType=v:ChartViewer}}"
+                          X2="{Binding CursorPositionX, RelativeSource={RelativeSource AncestorType=v:ChartViewer}}"
+                          Y1="0"
+                          Y2="{Binding ActualHeight, RelativeSource={RelativeSource AncestorType=Canvas}}" />
+                    <Line util:VisibilityExtensions.IsVisible="{Binding CursorVisible, RelativeSource={RelativeSource AncestorType=v:ChartViewer}}"
+                          IsHitTestVisible="False"
+                          Opacity="0.5"
+                          Stroke="{DynamicResource SecondaryAccentBrush}"
+                          StrokeThickness="2"
+                          X1="0"
+                          X2="{Binding ActualWidth, RelativeSource={RelativeSource AncestorType=Canvas}}"
+                          Y1="{Binding CursorPositionY, RelativeSource={RelativeSource AncestorType=v:ChartViewer}}"
+                          Y2="{Binding CursorPositionY, RelativeSource={RelativeSource AncestorType=v:ChartViewer}}" />
+                    <TextBlock Canvas.Left="{Binding CursorPositionX, RelativeSource={RelativeSource AncestorType=v:ChartViewer}}"
+                               Canvas.Top="{Binding ActualHeight, RelativeSource={RelativeSource AncestorType=Canvas}}"
+                               Width="200"
+                               Margin="-100 4 0 0"
+                               util:VisibilityExtensions.IsVisible="{Binding CursorVisible, RelativeSource={RelativeSource AncestorType=v:ChartViewer}}"
+                               FontFamily="Sans Serif"
+                               FontSize="10"
+                               Foreground="{DynamicResource MaterialDesignBody}"
+                               Text="{Binding CursorLabelX, RelativeSource={RelativeSource AncestorType=v:ChartViewer}}"
+                               TextAlignment="Center" />
+                    <Grid Canvas.Top="{Binding CursorPositionY, RelativeSource={RelativeSource AncestorType=v:ChartViewer}}"
+                          Canvas.Right="{Binding ActualWidth, RelativeSource={RelativeSource AncestorType=Canvas}}"
+                          Height="20"
+                          Margin="0 -10 10 0"
+                          util:VisibilityExtensions.IsVisible="{Binding CursorVisible, RelativeSource={RelativeSource AncestorType=v:ChartViewer}}">
+                        <TextBlock VerticalAlignment="Center"
+                                   FontFamily="Sans Serif"
+                                   FontSize="10"
+                                   Foreground="{DynamicResource MaterialDesignBody}"
+                                   Text="{Binding CursorLabelY, RelativeSource={RelativeSource AncestorType=v:ChartViewer}}" />
+                    </Grid>
+                </Canvas>
+                <charts:LinearAxis x:Name="XAxis"
+                                   Grid.Row="1"
+                                   Grid.Column="2"
+                                   Margin="0 -5 0 0"
+                                   Foreground="{DynamicResource MaterialDesignBody}"
+                                   IsMoveable="True"
+                                   IsScaleable="True"
+                                   Orientation="Horizontal"
+                                   TickFormat="{Binding Axis, Converter={StaticResource TickFormatConverter}}">
+                    <charts:LinearAxis.Labels>
+                        <MultiBinding Converter="{StaticResource LabelListConverter}">
+                            <Binding Path="Data" />
+                            <Binding Path="Axis" />
+                            <Binding Path="Data.Count" />
+                        </MultiBinding>
+                    </charts:LinearAxis.Labels>
+                </charts:LinearAxis>
+                <TextBlock Grid.Row="2"
+                           Grid.Column="2"
+                           Margin="0 5 0 0"
+                           HorizontalAlignment="Center"
+                           VerticalAlignment="Center"
+                           Foreground="{StaticResource MaterialDesignBodyLight}"
+                           Text="{Binding Axis.HeaderText}" />
+            </Grid>
+        </ControlTemplate>
+
+        <ControlTemplate x:Key="CircularChartTemplate">
+            <ItemsControl ItemsSource="{Binding Series}">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <StackPanel HorizontalAlignment="Center"
+                                    Orientation="Horizontal" />
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate DataType="{x:Type m:ColumnData}">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="*" />
+                            </Grid.RowDefinitions>
+                            <TextBlock Grid.Row="0"
+                                       HorizontalAlignment="Center"
+                                       Text="{Binding HeaderText}" />
+                            <charts:PieSeries Grid.Row="1"
+                                              Margin="0 16 0 0">
+                                <charts:PieSeries.Data>
+                                    <MultiBinding Converter="{StaticResource CategoryListConverter}">
+                                        <Binding Path="DataContext.Data"
+                                                 RelativeSource="{RelativeSource AncestorType=v:ChartViewer}" />
+                                        <Binding Path="DataContext.Axis"
+                                                 RelativeSource="{RelativeSource AncestorType=v:ChartViewer}" />
+                                        <Binding Path="" />
+                                        <Binding Path="DataContext.Count"
+                                                 RelativeSource="{RelativeSource AncestorType=v:ChartViewer}" />
+                                    </MultiBinding>
+                                </charts:PieSeries.Data>
+                            </charts:PieSeries>
+                        </Grid>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </ControlTemplate>
+
+    </UserControl.Resources>
+    <UserControl.Style>
+        <Style>
+            <Setter Property="Control.Template" Value="{StaticResource LinearChartTemplate}" />
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding AxisType}"
+                             Value="{x:Static m:VisualizationAxisType.Angular}">
+                    <Setter Property="Control.Template" Value="{StaticResource CircularChartTemplate}" />
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+    </UserControl.Style>
+</UserControl>
