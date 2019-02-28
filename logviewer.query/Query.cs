@@ -15,7 +15,7 @@ using System.Threading.Tasks;
 namespace logviewer.query
 {
     /// <summary>
-    /// A class for executing queries on an indexed log provided by a <see cref="Log"/> instance.
+    /// A class for executing queries on an indexed log provided by a <see cref="BaseLog"/> instance.
     /// </summary>
     internal class Query : VirtualList<ILogItem>, IQuery
     {
@@ -34,7 +34,7 @@ namespace logviewer.query
         /// <summary>
         /// Log providing the query source data
         /// </summary>
-        private readonly Log _log;
+        private readonly BaseLog _log;
 
         /// <summary>
         /// Static columns of the query
@@ -66,7 +66,7 @@ namespace logviewer.query
         /// <param name="log">The log to query</param>
         /// <param name="settings">The application settings</param>
         /// <param name="query">The query string to execute</param>
-        internal Query(Log log, Node tree)
+        internal Query(BaseLog log, Node tree)
         {
             _log = log;
             _tree = tree;

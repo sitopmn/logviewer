@@ -18,9 +18,9 @@ namespace logviewer.query.Visitors
     /// </summary>
     internal class IndexVisitor : IVisitor
     {
-        private readonly Log _log;
+        private readonly BaseLog _log;
 
-        public IndexVisitor(Log log)
+        public IndexVisitor(BaseLog log)
         {
             _log = log;
         }

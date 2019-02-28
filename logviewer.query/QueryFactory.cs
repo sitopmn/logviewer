@@ -15,7 +15,7 @@ using System.Text.RegularExpressions;
 namespace logviewer.query
 {
     /// <summary>
-    /// A class for executing queries on an indexed log provided by a <see cref="Log"/> instance.
+    /// A class for executing queries on an indexed log provided by a <see cref="BaseLog"/> instance.
     /// </summary>
     internal static class QueryFactory
     {
@@ -247,7 +247,7 @@ namespace logviewer.query
         /// <param name="log">The log to query</param>
         /// <param name="settings">The application settings</param>
         /// <param name="query">The query string to execute</param>
-        public static IQuery CreateQuery(Log log, ISettings settings, string query)
+        public static IQuery CreateQuery(BaseLog log, ISettings settings, string query)
         {
             // store settings into the static variables for access by the QueryFunctions class
             if (string.IsNullOrEmpty(DateTimeFormat))

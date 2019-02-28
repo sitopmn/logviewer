@@ -71,7 +71,9 @@
     <Compile Include="Aggregates\ScalarAggregate.cs" />
     <Compile Include="Aggregates\SumAggregate.cs" />
     <Compile Include="Index\EliasFanoList.cs" />
+    <Compile Include="Interfaces\ILogIndexer.cs" />
     <Compile Include="Interfaces\IParser.cs" />
+    <Compile Include="Logs\TextLog.cs" />
     <Compile Include="Nodes\ParseNode.cs" />
     <Compile Include="Parsing\CsvParser.cs" />
     <Compile Include="Parsing\JsonParser.cs" />
@@ -90,12 +92,13 @@
     <Compile Include="Index\InvertedIndex.cs" />
     <Compile Include="Interfaces\IAggregate.cs" />
     <Compile Include="Interfaces\IVisitor.cs" />
-    <Compile Include="Log.cs" />
+    <Compile Include="Logs\BaseLog.cs" />
     <Compile Include="Types\Pattern.cs" />
     <Compile Include="Query.cs" />
     <Compile Include="Nodes\AggregateNode.cs" />
     <Compile Include="Nodes\AndNode.cs" />
     <Compile Include="Types\LogItem.cs" />
+    <Compile Include="Types\Token.cs" />
     <Compile Include="Types\VirtualList.cs" />
     <Compile Include="Visitors\EvaluateVisitor.cs" />
     <Compile Include="Visitors\FieldsVisitor.cs" />

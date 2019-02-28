@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.ComponentModel;
+using System.ComponentModel.Composition;
 using System.Threading;
 
 namespace logviewer.Interfaces
@@ -31,7 +32,7 @@ namespace logviewer.Interfaces
         /// Gets the source files of the log
         /// </summary>
         string[] Files { get; }
-        
+
         /// <summary>
         /// Gets a value indicating the log is updating
         /// </summary>
@@ -73,26 +74,18 @@ namespace logviewer.Interfaces
         /// <param name="cancellation">A <see cref="CancellationToken"/> for canceling the operation</param>
         /// <returns>Enumerable returning the log items</returns>
         IEnumerable<ILogItem> Read(Action<double> progress, CancellationToken cancellation);
-        
+
         #endregion
     }
 
-    public enum ETokenType
+    /// <summary>
+    /// Attribute for exporting log sources
+    /// </summary>
+    public class ExportLogAttribute : ExportAttribute
     {
-        Invalid = 0,
-
-        Line = 1,
-
-        Characters = 2,
-    }
-
-    public struct Token
-    {
-        public ETokenType Type;
-        public string Data;
-        public string File;
-        public string Member;
-        public long Position;
-        public bool IsExact;
+        public ExportLogAttribute()
+            : base(typeof(ILog))
+        {
+        }
     }
 }

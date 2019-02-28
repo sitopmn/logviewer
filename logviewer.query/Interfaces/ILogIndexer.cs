@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace logviewer.Interfaces
+namespace logviewer.query
 {
     /// <summary>
     /// Interface for processing tokens while indexing

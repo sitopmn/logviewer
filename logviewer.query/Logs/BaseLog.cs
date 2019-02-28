@@ -3,6 +3,7 @@
 using log4net;
 using logviewer.Interfaces;
 using logviewer.query.Index;
+using logviewer.query.Interfaces;
 using logviewer.query.Parsing;
 using logviewer.query.Readers;
 using logviewer.query.Types;
@@ -24,15 +25,14 @@ using System.Threading.Tasks;
 namespace logviewer.query
 {
     /// <summary>
-    /// A class encapsulating access to an indexed log. It can be queried using the <see cref="Query"/> class.
+    /// Base class encapsulating access to an indexed log. It can be queried using the <see cref="Query"/> class.
     /// </summary>
-    [Export(typeof(logviewer.Interfaces.ILog))]
-    public class Log : logviewer.Interfaces.ILog
+    internal abstract class BaseLog : logviewer.Interfaces.ILog
     {
         /// <summary>
         /// The logger for the application log
         /// </summary>
-        private readonly log4net.ILog _logger = LogManager.GetLogger(typeof(Log));
+        private readonly log4net.ILog _logger = LogManager.GetLogger(typeof(BaseLog));
         
         /// <summary>
         /// The application settings
@@ -45,25 +45,25 @@ namespace logviewer.query
         private readonly ILogIndexer[] _indexers;
 
         /// <summary>
-        /// The source files or directories of the log
-        /// </summary>
-        private string[] _source = new string[0];
-
-        /// <summary>
         /// The index of the log
         /// </summary>
         private readonly InvertedIndex _index;
-
+        
+        /// <summary>
+        /// The source files or directories of the log
+        /// </summary>
+        private string[] _source = new string[0];
+        
         /// <summary>
         /// The maximum progress value
         /// </summary>
         private long _progressMaximum = 0;
         
         /// <summary>
-        /// Initializes a new instance of the <see cref="Log"/> class.
+        /// Initializes a new instance of the <see cref="BaseLog"/> class.
         /// </summary>
         [ImportingConstructor]
-        internal Log(ISettings settings, InvertedIndex index, [ImportMany] IEnumerable<ILogIndexer> indexers)
+        internal BaseLog(ISettings settings, InvertedIndex index, [ImportMany] IEnumerable<ILogIndexer> indexers)
         {
             _settings = settings;
             _index = index;
@@ -127,12 +127,21 @@ namespace logviewer.query
         /// <param name="cancellationToken">CancellationToken for cancelling the index update</param>
         public void Load(string[] files, Action<double> progress, CancellationToken cancellationToken)
         {
+            // set the source files
             _source = files;
+
+            // initialize indexers
             for (var i = 0; i < _indexers.Length; i++) _indexers[i].Initialize();
+
+            // 
+
+            // and index the log
             Update(progress, cancellationToken);
+
+            // fire the loaded event when done
             Loaded?.Invoke(this, EventArgs.Empty);
         }
-
+        
         /// <summary>
         /// Updates the index for the log
         /// </summary>
@@ -191,7 +200,7 @@ namespace logviewer.query
                         try
                         {
                             var buffer = new Token[1024];
-                            tokenreader = new LineTokenReader(stream, element.Item1, element.Item2);
+                            tokenreader = CreateTokenReader(stream, element.Item1, element.Item2);
                             var count = 0;
                             while ((count = tokenreader.Read(buffer, 0, buffer.Length)) > 0)
                             {
@@ -289,9 +298,31 @@ namespace logviewer.query
             return Read(_index.Search(new Token[0]), (s, t) => progress(Interlocked.Add(ref total, s) * 100 / (double)t), cancellation);
         }
 
-#endregion
+        #endregion
 
-#region internal methods
+        #region protected methods
+
+        /// <summary>
+        /// Factory method for creating log item readers
+        /// </summary>
+        /// <param name="stream">Input stream to read</param>
+        /// <param name="file">Name of the file</param>
+        /// <param name="member">Name of the archive member</param>
+        /// <returns>Reader returning log items</returns>
+        protected abstract LogReader<ILogItem> CreateItemReader(Stream stream, string file, string member);
+
+        /// <summary>
+        /// Factory method for creating index token readers
+        /// </summary>
+        /// <param name="stream">Input stream to read</param>
+        /// <param name="file">Name of the file</param>
+        /// <param name="member">Name of the archive member</param>
+        /// <returns>Reader returning index tokens</returns>
+        protected abstract LogReader<Token> CreateTokenReader(Stream stream, string file, string member);
+
+        #endregion
+
+        #region internal methods
 
         /// <summary>
         /// Estimates the number of matches of the given tokens. 
@@ -425,7 +456,7 @@ namespace logviewer.query
                     {
                         try
                         {
-                            reader = new LineItemReader(stream, readerFile, readerMember);
+                            reader = CreateItemReader(stream, readerFile, readerMember);
                         }
                         catch (Exception ex)
                         {
@@ -472,9 +503,9 @@ namespace logviewer.query
             }
         }
 
-#endregion
+        #endregion
 
-#region private methods
+        #region private methods
 
         /// <summary>
         /// Opens a stream to a given file
@@ -551,6 +582,6 @@ namespace logviewer.query
             .ToList();
         }
 
-#endregion
+        #endregion
     }
 }

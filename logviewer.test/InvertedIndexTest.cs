@@ -1,4 +1,5 @@
 ﻿using logviewer.Interfaces;
+using logviewer.query;
 using logviewer.query.Index;
 using logviewer.query.Readers;
 using logviewer.query.Types;

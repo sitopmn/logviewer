@@ -31,12 +31,12 @@ namespace logviewer.query.Readers
         /// <summary>
         /// Encoding if the input text
         /// </summary>
-        private Encoding _encoding;
+        private readonly Encoding _encoding;
 
         /// <summary>
         /// Decoder for decoding input text
         /// </summary>
-        private Decoder _decoder;
+        private readonly Decoder _decoder;
 
         /// <summary>
         /// Number of bytes in <see cref="_undecoded"/>
@@ -68,8 +68,10 @@ namespace logviewer.query.Readers
         /// <param name="stream">Stream providing the source data</param>
         /// <param name="file">Name of the file</param>
         /// <param name="member">Name of the archive member if the file is an archive</param>
-        protected LogReader(Stream stream, string file, string member)
+        protected LogReader(Stream stream, Encoding encoding, string file, string member)
         {
+            _encoding = encoding;
+            _decoder = _encoding.GetDecoder();
             _stream = stream;
             File = file;
             Member = member;
@@ -98,12 +100,7 @@ namespace logviewer.query.Readers
                 }
             }
         }
-
-        /// <summary>
-        /// Gets the encoding of the stream
-        /// </summary>
-        public Encoding CurrentEncoding => _encoding;
-
+        
         /// <summary>
         /// Gets the current file name
         /// </summary>
@@ -341,23 +338,8 @@ namespace logviewer.query.Readers
             _undecodedBytes = bytesRead;
             _streamPosition += bytesRead;
             _currentIndex = 0;
-
-            // detect the encoding if not done yet
-            if (CurrentEncoding == null)
-            {
-                DetectEncoding();
-            }
         }
-
-        /// <summary>
-        /// Detects the encoding from undecoded bytes in <see cref="_undecoded"/>
-        /// </summary>
-        private void DetectEncoding()
-        {
-            _encoding = Encoding.Default;
-            _decoder = CurrentEncoding.GetDecoder();
-        }
-
+        
         #endregion
     }
 }

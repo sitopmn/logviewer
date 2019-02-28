@@ -189,7 +189,7 @@ namespace logviewer.test.Readers
 
         private LineItemReader CreateReader(IEnumerable<string> lines, string newline = "\r\n")
         {
-            return new LineItemReader(new MemoryStream(Encoding.Default.GetBytes(string.Join(newline, lines))), "file", "member");
+            return new LineItemReader(new MemoryStream(Encoding.Default.GetBytes(string.Join(newline, lines))), Encoding.Default, "file", "member");
         }
     }
 }

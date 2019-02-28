@@ -34,10 +34,11 @@ namespace logviewer.query.Readers
         /// Initializes a new instance of the <see cref="LineTokenReader"/> class
         /// </summary>
         /// <param name="stream">Stream providing the source data</param>
+        /// <param name="encoding">Encoding of the log file</param>
         /// <param name="file">Name of the file</param>
         /// <param name="member">Name of the archive member if the file is an archive</param>
-        public LineTokenReader(Stream stream, string file, string member)
-            : base(stream, file, member)
+        public LineTokenReader(Stream stream, Encoding encoding, string file, string member)
+            : base(stream, encoding, file, member)
         {
         }
 
@@ -46,7 +47,7 @@ namespace logviewer.query.Readers
         /// </summary>
         /// <param name="line">String to tokenize</param>
         public LineTokenReader(string line)
-            : base(new MemoryStream(Encoding.Default.GetBytes(line)), string.Empty, string.Empty)
+            : base(new MemoryStream(Encoding.Default.GetBytes(line)), Encoding.Default, string.Empty, string.Empty)
         {
         }
 
@@ -55,7 +56,7 @@ namespace logviewer.query.Readers
         /// </summary>
         /// <param name="line">String to tokenize</param>
         public LineTokenReader(string line, string file, string member)
-            : base(new MemoryStream(Encoding.Default.GetBytes(line)), file, member)
+            : base(new MemoryStream(Encoding.Default.GetBytes(line)), Encoding.Default, file, member)
         {
         }
 

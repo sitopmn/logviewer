@@ -21,10 +21,11 @@ namespace logviewer.query.Readers
         /// Initializes a new instance of the <see cref="LineItemReader"/> class
         /// </summary>
         /// <param name="stream">Stream providing the source data</param>
+        /// <param name="encoding">Encoding of the log file</param>
         /// <param name="file">Name of the file</param>
         /// <param name="member">Name of the archive member if the file is an archive</param>
-        public LineItemReader(Stream stream, string file, string member)
-            : base(stream, file, member)
+        public LineItemReader(Stream stream, Encoding encoding, string file, string member)
+            : base(stream, encoding, file, member)
         {
         }
 

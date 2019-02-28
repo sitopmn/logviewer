@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using logviewer.Interfaces;
+using logviewer.query;
 using logviewer.query.Readers;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
@@ -99,7 +100,7 @@ namespace logviewer.test.Readers
 
         private IEnumerable<Token> ReadTokens(string line)
         {
-            return new LineTokenReader(new MemoryStream(Encoding.Default.GetBytes(line)), string.Empty, string.Empty).ReadAll();
+            return new LineTokenReader(new MemoryStream(Encoding.Default.GetBytes(line)), Encoding.Default, string.Empty, string.Empty).ReadAll();
         }
     }
 }

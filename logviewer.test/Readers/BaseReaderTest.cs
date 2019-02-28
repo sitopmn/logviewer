@@ -146,7 +146,7 @@ namespace logviewer.test.Readers
         private class TestReader : LogReader<string>
         {
             public TestReader(string data, string file, string member)
-                : base(new MemoryStream(Encoding.Default.GetBytes(data), false), file, member)
+                : base(new MemoryStream(Encoding.Default.GetBytes(data), false), Encoding.Default, file, member)
             {
             }
             

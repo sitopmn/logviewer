@@ -72,7 +72,6 @@
     <Compile Include="Extensions\ScrollViewerExtensions.cs" />
     <Compile Include="Extensions\VisibilityExtensions.cs" />
     <Compile Include="Interfaces\ILog.cs" />
-    <Compile Include="Interfaces\ILogIndexer.cs" />
     <Compile Include="Interfaces\ILogItem.cs" />
     <Compile Include="Interfaces\IPageView.cs" />
     <Compile Include="Interfaces\IPageViewModel.cs" />
