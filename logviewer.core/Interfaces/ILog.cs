@@ -79,13 +79,37 @@ namespace logviewer.Interfaces
     }
 
     /// <summary>
+    /// Metadata for the exported log interfaces
+    /// </summary>
+    public interface ILogMetadata
+    {
+        /// <summary>
+        /// Gets the name of the log format
+        /// </summary>
+        string FormatName
+        {
+            get;
+        }
+    }
+
+    /// <summary>
     /// Attribute for exporting log sources
     /// </summary>
-    public class ExportLogAttribute : ExportAttribute
+    public class ExportLogAttribute : ExportAttribute, ILogMetadata
     {
-        public ExportLogAttribute()
+        /// <summary>
+        /// Initializes a new instance of the <see cref="ExportLogAttribute"/> class
+        /// </summary>
+        /// <param name="formatName">Name of the log format</param>
+        public ExportLogAttribute(string formatName)
             : base(typeof(ILog))
         {
+            FormatName = formatName;
         }
+
+        /// <summary>
+        /// Gets the name of the log format
+        /// </summary>
+        public string FormatName { get; }
     }
 }

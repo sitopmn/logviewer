@@ -14,7 +14,7 @@ namespace logviewer.query
     /// <summary>
     /// Log implementation interpreting the sources files line by line as plain text
     /// </summary>
-    [ExportLog]
+    [ExportLog("Unstructured text")]
     internal class TextLog : BaseLog
     {
         /// <summary>
