@@ -29,11 +29,6 @@ namespace logviewer.query.Readers
         private readonly byte[] _undecoded = new byte[1024];
 
         /// <summary>
-        /// StringBuilder for handling overflowing marks (larger than one buffer size)
-        /// </summary>
-        private readonly StringBuilder _markOverflow = new StringBuilder();
-
-        /// <summary>
         /// Encoding if the input text
         /// </summary>
         private Encoding _encoding;
@@ -62,17 +57,7 @@ namespace logviewer.query.Readers
         /// Index within <see cref="_undecoded"/> of the next byte to decode
         /// </summary>
         private int _currentIndex;
-
-        /// <summary>
-        /// The current character
-        /// </summary>
-        private char _currentCharacter;
-
-        /// <summary>
-        /// Position of the beginning of the marked area
-        /// </summary>
-        private long _markBeginPosition = -1;
-
+        
         #endregion
 
         #region ctor
@@ -132,7 +117,7 @@ namespace logviewer.query.Readers
         /// <summary>
         /// Gets the current position of the reader
         /// </summary>
-        public long Position { get; private set; }
+        public long Position => _currentPosition;
 
         /// <summary>
         /// Gets the index of the current item
@@ -159,9 +144,6 @@ namespace logviewer.query.Readers
             {
                 throw new NotSupportedException();
             }
-
-            // cancel mark on seek
-            Unmark();
             
             if (offset < _currentPosition)
             {
@@ -171,7 +153,7 @@ namespace logviewer.query.Readers
             {
                 // target offset is somewhere within the buffers
                 _currentIndex += (int)(offset - _currentPosition);
-                Position = _currentPosition;
+                _currentPosition = offset;
             }
             else
             {
@@ -193,7 +175,7 @@ namespace logviewer.query.Readers
                     }
                 }
 
-                Position = _currentPosition = _streamPosition;
+                _currentPosition = _streamPosition;
                 _currentIndex = 0;
                 _undecodedBytes = 0;
             }
@@ -288,7 +270,11 @@ namespace logviewer.query.Readers
                 EnsureBuffer();
             }
 
-            Position = _currentPosition;
+            if (_undecodedBytes == 0)
+            {
+                return -1;
+            }
+            
             _decoder.Convert(_undecoded, _currentIndex, _undecodedBytes - _currentIndex, chars, 0, 1, false, out bytesUsed, out charsUsed, out completed);
 
             return chars[0];
@@ -310,90 +296,18 @@ namespace logviewer.query.Readers
                 EnsureBuffer();
             }
 
-            Position = _currentPosition;
+            if (_undecodedBytes == 0)
+            {
+                return -1;
+            }
+
             _decoder.Convert(_undecoded, _currentIndex, _undecodedBytes - _currentIndex, chars, 0, 1, false, out bytesUsed, out charsUsed, out completed);
             _currentPosition += bytesUsed;
             _currentIndex += bytesUsed;
-            _currentCharacter = chars[0];
 
-            if (_markBeginPosition >= 0)
-            {
-                _markOverflow.Append(_currentCharacter);
-            }
-
-            return _currentCharacter;
+            return chars[0];
         }
 
-        /// <summary>
-        /// Mark the beginning of a string (including the current character) to extract
-        /// </summary>
-        /// <remarks>Prevents purging of the string from the decoded buffer, so string length is at max the buffer length</remarks>
-        protected void MarkBegin()
-        {
-            _markOverflow.Clear();
-            _markBeginPosition = Position;
-
-            if (_currentCharacter != 0)
-            {
-                _markOverflow.Append(_currentCharacter);
-            }
-        }
-
-        /// <summary>
-        /// Mark the end of a string in the input (including the current character and an optional offset) and extract it
-        /// </summary>
-        /// <returns></returns>
-        protected string MarkEnd(int offset = 0)
-        {
-            var result = string.Empty;
-
-            if (_markBeginPosition < 0)
-            {
-                throw new InvalidOperationException("MarkEnd() called without previous call to MarkBegin()");
-            }
-
-            if (offset < 0)
-            {
-                _markOverflow.Remove(_markOverflow.Length + offset, Math.Abs(offset));
-            }
-
-            _markBeginPosition = -1;
-            return _markOverflow.ToString();
-        }
-
-        /// <summary>
-        /// Gets the starting position of the marked area
-        /// </summary>
-        /// <returns>Position of the marked area within the input stream</returns>
-        protected long MarkPosition()
-        {
-            return _markBeginPosition;
-        }
-
-        /// <summary>
-        /// Gets the length of the marked area
-        /// </summary>
-        /// <returns></returns>
-        protected int MarkLength()
-        {
-            if (_markBeginPosition >= 0)
-            {
-                return _markOverflow.Length;
-            }
-            else
-            {
-                return 0;
-            }
-        }
-
-        /// <summary>
-        /// Cancels a marked string and allows it to be purged from the input buffer
-        /// </summary>
-        protected void Unmark()
-        {
-            _markBeginPosition = -1;
-        }
-        
         #endregion
 
         #region private methods
@@ -414,6 +328,13 @@ namespace logviewer.query.Readers
             {
                 Array.Copy(_undecoded, _currentIndex, _undecoded, 0, _undecodedBytes - _currentIndex);
             }
+            else if (_currentIndex > _undecodedBytes)
+            {
+                System.Diagnostics.Debugger.Break();
+            }
+
+            // calculate the number of undecoded bytes currently in the buffer
+            _undecodedBytes -= _currentIndex;
 
             // fill the undecoded buffer
             var bytesRead = _stream.Read(_undecoded, _undecodedBytes, _undecoded.Length - _undecodedBytes);

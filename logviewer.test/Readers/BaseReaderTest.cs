@@ -69,8 +69,8 @@ namespace logviewer.test.Readers
             var reader = new TestReader(text, "file", "member");
             for (var i = 0; i < text.Length; i++)
             {
-                reader.ReadChar();
                 Assert.AreEqual(i, reader.Position);
+                reader.ReadChar();
             }
         }
 
@@ -89,40 +89,7 @@ namespace logviewer.test.Readers
             var reader = new TestReader(text, "file", "member");
             Assert.AreEqual("member", reader.Member);
         }
-
-        [TestMethod]
-        public void MarkReturnsCorrectString()
-        {
-            var text = CreateText();
-            var reader = new TestReader(text, "file", "member");
-            for (var i = 0; i < 6; i++) reader.ReadChar();
-            reader.MarkBegin();
-            for (var i = 0; i < 5; i++) reader.ReadChar();
-            Assert.AreEqual("World", reader.MarkEnd());
-        }
-
-        [TestMethod]
-        public void MarkIsKeptInBuffer()
-        {
-            var text = CreateText();
-            var reader = new TestReader(text, "file", "member");
-            for (var i = 0; i < 1000; i++) reader.ReadChar();
-            reader.MarkBegin();
-            for (var i = 0; i < 32; i++) reader.ReadChar();
-            Assert.AreEqual(text.Substring(1000, 32), reader.MarkEnd());
-            for (var i = 0; i < 32; i++) Assert.AreEqual(text[1000 + 32 + i], reader.ReadChar());
-        }
-
-        [TestMethod]
-        public void MarkPositionReturnsCorrectPosition()
-        {
-            var text = CreateText();
-            var reader = new TestReader(text, "file", "member");
-            for (var i = 0; i < 1000; i++) reader.ReadChar();
-            reader.MarkBegin();
-            Assert.AreEqual(1000, reader.MarkPosition());
-        }
-
+        
         #endregion
 
         #region public method tests
@@ -191,26 +158,6 @@ namespace logviewer.test.Readers
             public new int PeekChar()
             {
                 return base.PeekChar();
-            }
-
-            public new void MarkBegin()
-            {
-                base.MarkBegin();
-            }
-
-            public new string MarkEnd(int offset = 0)
-            {
-                return base.MarkEnd(offset);
-            }
-
-            public new void Unmark()
-            {
-                base.Unmark();
-            }
-
-            public new long MarkPosition()
-            {
-                return base.MarkPosition();
             }
 
             public override string Read()

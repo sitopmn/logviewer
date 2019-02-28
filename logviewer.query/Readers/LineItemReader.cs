@@ -27,7 +27,7 @@ namespace logviewer.query.Readers
             : base(stream, file, member)
         {
         }
-        
+
         /// <summary>
         /// Reads a log item
         /// </summary>
@@ -35,42 +35,46 @@ namespace logviewer.query.Readers
         public override ILogItem Read()
         {
             ILogItem result = null;
-            var isMarked = false;
+            var line = new StringBuilder();
+            var linePosition = Position;
             while (!EndOfStream)
             {
                 var c = ReadChar();
                 if (c == '\r')
                 {
-                    result = new LogItem(isMarked ? MarkEnd(-1) : string.Empty, File, Member, MarkPosition(), Index++);
+                    result = new LogItem(line.ToString(), File, Member, linePosition, Index++);
 
                     if (PeekChar() == '\n')
                     {
                         ReadChar();
                     }
 
+                    line.Clear();
+                    linePosition = Position;
                     break;
                 }
                 else if (c == '\n')
                 {
-                    result = new LogItem(isMarked ? MarkEnd(-1) : string.Empty, File, Member, MarkPosition(), Index++);
+                    result = new LogItem(line.ToString(), File, Member,linePosition, Index++);
 
                     if (PeekChar() == '\r')
                     {
                         ReadChar();
                     }
-                    
+
+                    line.Clear();
+                    linePosition = Position;
                     break;
                 }
-                else if (!isMarked)
+                else
                 {
-                    MarkBegin();
-                    isMarked = true;
+                    line.Append((char)c);
                 }
             }
 
-            if (MarkLength() > 0 && result == null)
+            if (line.Length > 0 && result == null)
             {
-                result = new LogItem(MarkEnd(), File, Member, MarkPosition(), Index++);
+                result = new LogItem(line.ToString(), File, Member, linePosition, Index++);
             }
             
             return result;

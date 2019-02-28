@@ -346,9 +346,6 @@ namespace logviewer.query
                 var indexEnumerator = index.GetEnumerator();
                 var readerFile = string.Empty;
                 var readerMember = string.Empty;
-                var readerPosition = 0L;
-                var readerLine = 0;
-                var readerBytes = 0;
                 LogReader<ILogItem> reader = null;
                 var lastProgress = 0L;
 
@@ -379,8 +376,6 @@ namespace logviewer.query
                             stream = new FileStream(indexEnumerator.Current.File, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
                             readerFile = indexEnumerator.Current.File;
                             readerMember = string.Empty;
-                            readerPosition = 0;
-                            readerLine = 0;
                         }
                         catch (Exception ex)
                         {
@@ -417,8 +412,6 @@ namespace logviewer.query
                         {
                             stream = archive.GetEntry(indexEnumerator.Current.Member).Open();
                             readerMember = indexEnumerator.Current.Member;
-                            readerPosition = 0;
-                            readerLine = 0;
                         }
                         catch (Exception ex)
                         {
@@ -442,16 +435,13 @@ namespace logviewer.query
                     }
 
                     // the current index entry points to a position further into the file
-                    if (indexEnumerator.Current.Position > readerPosition)
+                    if (indexEnumerator.Current.Position > reader.Position)
                     {
-                        readerPosition = reader.Seek(indexEnumerator.Current.Position, indexEnumerator.Current.Line, SeekOrigin.Begin);
-                        readerLine = indexEnumerator.Current.Line;
+                        reader.Seek(indexEnumerator.Current.Position, indexEnumerator.Current.Line, SeekOrigin.Begin);
                     }
 
                     // read data
                     yield return (LogItem)reader.Read();
-                    readerPosition += readerBytes;
-                    readerLine += 1;
                     linesRead += 1;
 
                     // check for cancellation and report progress
