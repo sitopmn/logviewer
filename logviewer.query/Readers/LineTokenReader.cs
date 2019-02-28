@@ -308,7 +308,7 @@ namespace logviewer.query.Readers
         /// <returns></returns>
         private Token CreateNewlineToken(long position)
         {
-            return new Token() { Type = ETokenType.Line, File = File, Member = Member, Position = position, IsExact = true };
+            return new Token() { Type = ETokenType.Item, File = File, Member = Member, Position = position, IsExact = true };
         }
     }
 }

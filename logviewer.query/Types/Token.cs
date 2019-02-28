@@ -53,9 +53,9 @@ namespace logviewer.query
         Invalid = 0,
 
         /// <summary>
-        /// Marks the start of a new line
+        /// Marks the start of a new item
         /// </summary>
-        Line = 1,
+        Item = 1,
 
         /// <summary>
         /// Marks a token consisting of character data

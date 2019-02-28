@@ -78,6 +78,7 @@
     <Compile Include="Parsing\CsvParser.cs" />
     <Compile Include="Parsing\JsonParser.cs" />
     <Compile Include="Parsing\TestParser.cs" />
+    <Compile Include="Readers\JsonTokenReader.cs" />
     <Compile Include="Readers\LineItemReader.cs" />
     <Compile Include="Readers\LineTokenReader.cs" />
     <Compile Include="Readers\LogReader.cs" />

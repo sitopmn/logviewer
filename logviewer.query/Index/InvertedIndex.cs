@@ -154,7 +154,7 @@ namespace logviewer.query.Index
 
             for (var i = 0; i < count; i++)
             {
-                if (token[i].Type == ETokenType.Line)
+                if (token[i].Type == ETokenType.Item)
                 {
                     linePositions.Add((uint)token[i].Position);
                 }

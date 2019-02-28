@@ -18,7 +18,7 @@ namespace logviewer.test.Readers
         {
             var tokens = ReadTokens("FATAL").ToArray();
             Assert.AreEqual(2, tokens.Length);
-            Assert.AreEqual(ETokenType.Line, tokens[0].Type);
+            Assert.AreEqual(ETokenType.Item, tokens[0].Type);
             Assert.AreEqual(ETokenType.Characters, tokens[1].Type);
             Assert.AreEqual("FATAL", tokens[1].Data);
         }
@@ -29,7 +29,7 @@ namespace logviewer.test.Readers
             var tokens = ReadTokens("{time:time} [*ROLL_CHANGING -> ROLL_COMPLETED").ToArray();
             Assert.AreEqual(7, tokens.Length);
             Assert.AreEqual(0, tokens[0].Position);
-            Assert.AreEqual(ETokenType.Line, tokens[0].Type);
+            Assert.AreEqual(ETokenType.Item, tokens[0].Type);
 
             Assert.AreEqual(ETokenType.Characters, tokens[1].Type);
             Assert.AreEqual(1, tokens[1].Position);
@@ -63,14 +63,14 @@ namespace logviewer.test.Readers
             Assert.AreEqual(4, tokens.Length);
 
             Assert.AreEqual(0, tokens[0].Position);
-            Assert.AreEqual(ETokenType.Line, tokens[0].Type);
+            Assert.AreEqual(ETokenType.Item, tokens[0].Type);
 
             Assert.AreEqual(ETokenType.Characters, tokens[1].Type);
             Assert.AreEqual(0, tokens[1].Position);
             Assert.AreEqual("Hello", tokens[1].Data);
 
             Assert.AreEqual(7, tokens[2].Position);
-            Assert.AreEqual(ETokenType.Line, tokens[2].Type);
+            Assert.AreEqual(ETokenType.Item, tokens[2].Type);
 
             Assert.AreEqual(ETokenType.Characters, tokens[3].Type);
             Assert.AreEqual(7, tokens[3].Position);
@@ -84,14 +84,14 @@ namespace logviewer.test.Readers
             Assert.AreEqual(4, tokens.Length);
 
             Assert.AreEqual(0, tokens[0].Position);
-            Assert.AreEqual(ETokenType.Line, tokens[0].Type);
+            Assert.AreEqual(ETokenType.Item, tokens[0].Type);
 
             Assert.AreEqual(ETokenType.Characters, tokens[1].Type);
             Assert.AreEqual(0, tokens[1].Position);
             Assert.AreEqual("Hello", tokens[1].Data);
 
             Assert.AreEqual(6, tokens[2].Position);
-            Assert.AreEqual(ETokenType.Line, tokens[2].Type);
+            Assert.AreEqual(ETokenType.Item, tokens[2].Type);
 
             Assert.AreEqual(ETokenType.Characters, tokens[3].Type);
             Assert.AreEqual(6, tokens[3].Position);

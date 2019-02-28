@@ -178,7 +178,7 @@ namespace logviewer.test
         [ExpectedException(typeof(InvalidOperationException))]
         public void AddingTokenInIndexedFileSegmentThrowsException()
         {
-            Add("test1", string.Empty, 9999, _timestamp.AddSeconds(10), new[] { new Token() { Type = ETokenType.Line, Position = 120 }, new Token() { Type = ETokenType.Characters, Data = "asdf", Position = 123 } });
+            Add("test1", string.Empty, 9999, _timestamp.AddSeconds(10), new[] { new Token() { Type = ETokenType.Item, Position = 120 }, new Token() { Type = ETokenType.Characters, Data = "asdf", Position = 123 } });
         }
 
         [TestMethod]
@@ -187,7 +187,7 @@ namespace logviewer.test
             var data = string.Join("\r\n", _data1);
             var dataLength = Encoding.Default.GetByteCount(data);
 
-            Add("test1", string.Empty, 9999, _timestamp.AddSeconds(10), new[] { new Token() { Type = ETokenType.Line, Position = dataLength + 9 }, new Token() { Type = ETokenType.Characters, Data = "asdf", Position = dataLength + 10 } });
+            Add("test1", string.Empty, 9999, _timestamp.AddSeconds(10), new[] { new Token() { Type = ETokenType.Item, Position = dataLength + 9 }, new Token() { Type = ETokenType.Characters, Data = "asdf", Position = dataLength + 10 } });
         }
 
         [TestMethod]
@@ -196,7 +196,7 @@ namespace logviewer.test
             var data = string.Join("\r\n", _data1);
             var dataLength = Encoding.Default.GetByteCount(data);
 
-            Add("test1", string.Empty, 9999, _timestamp.AddSeconds(10), new[] { new Token() { Type = ETokenType.Line, Position = dataLength + 9 }, new Token() { Type = ETokenType.Characters, Data = "asdf", Position = dataLength + 10 } });
+            Add("test1", string.Empty, 9999, _timestamp.AddSeconds(10), new[] { new Token() { Type = ETokenType.Item, Position = dataLength + 9 }, new Token() { Type = ETokenType.Characters, Data = "asdf", Position = dataLength + 10 } });
 
             var result = _index.Search(new[] { new Token() { Type = ETokenType.Characters, Data = "asdf" } }).ToArray();
             Assert.AreEqual(1, result.Length);

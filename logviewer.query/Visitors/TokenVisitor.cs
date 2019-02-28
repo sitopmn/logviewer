@@ -31,7 +31,7 @@ namespace logviewer.query.Visitors
         public void Visit(PhraseNode node)
         {
             var set = new HashSet<string>();
-            foreach (var token in node.Tokens.Where(t => t.Type != ETokenType.Line))
+            foreach (var token in node.Tokens.Where(t => t.Type != ETokenType.Item))
             {
                 set.Add(token.Data);
             }
