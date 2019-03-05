@@ -91,9 +91,6 @@
         <KeyBinding Key="O"
                     Command="{Binding OpenCommand}"
                     Modifiers="Ctrl" />
-        <KeyBinding Key="I"
-                    Command="{Binding ReindexCommand}"
-                    Modifiers="Ctrl" />
     </Window.InputBindings>
     <Window.CommandBindings>
         <CommandBinding Command="{x:Static markdig:Commands.Hyperlink}"

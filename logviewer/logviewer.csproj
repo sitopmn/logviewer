@@ -143,6 +143,7 @@
       <DesignTime>True</DesignTime>
     </Compile>
     <Compile Include="Services\BookmarkService.cs" />
+    <Compile Include="Services\LogService.cs" />
     <Compile Include="ViewModel\ChartViewModel.cs" />
     <Compile Include="Settings.cs" />
     <Compile Include="ViewModel\DialogDeleteViewModel.cs" />

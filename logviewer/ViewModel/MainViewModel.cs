@@ -17,6 +17,7 @@ using System.Windows.Input;
 using System.Windows.Threading;
 using System.Xml;
 using System.Xml.Serialization;
+using logviewer.core.Interfaces;
 
 namespace logviewer.ViewModel
 {
@@ -34,7 +35,7 @@ namespace logviewer.ViewModel
         /// <summary>
         /// The currently loaded log
         /// </summary>
-        private readonly Interfaces.ILog _log;
+        private readonly ILogService _logService;
 
         /// <summary>
         /// Service managing the bookmarks
@@ -50,9 +51,9 @@ namespace logviewer.ViewModel
         /// Initializes a new instance of the <see cref="MainViewModel"/> class.
         /// </summary>
         [ImportingConstructor]
-        public MainViewModel(ISnackbarMessageQueue messageQueue, Interfaces.ILog log, IBookmarkService bookmarkService, [ImportMany] IEnumerable<ExportFactory<IPageViewModel, IPageViewModelMetadata>> viewModels, [ImportMany] IEnumerable<Lazy<IPageView, IPageViewMetadata>> views, DialogHelpViewModel helpViewModel)
+        public MainViewModel(ISnackbarMessageQueue messageQueue, ILogService logService, IBookmarkService bookmarkService, [ImportMany] IEnumerable<ExportFactory<IPageViewModel, IPageViewModelMetadata>> viewModels, [ImportMany] IEnumerable<Lazy<IPageView, IPageViewMetadata>> views, DialogHelpViewModel helpViewModel)
         {
-            _log = log;
+            _logService = logService;
             _pageFactories = viewModels.ToDictionary(vm => vm.Metadata.Context, vm => (ExportFactory<IPageViewModel>)vm);
             _bookmarkService = bookmarkService;
             
@@ -65,7 +66,6 @@ namespace logviewer.ViewModel
             OpenTabCommand = new DelegateCommand<Context>(CreateTab);
             ReplaceTabCommand = new DelegateCommand<Context>(ReplaceTab);
             CloseTabCommand = new DelegateCommand<PageViewModel>(CloseTab, t => Tabs.Count > 1);
-            ReindexCommand = new DelegateCommand(() => _log.Update(null, CancellationToken.None));
             OpenCommand = new DelegateCommand<string[]>(Open);
             EditCommand = new DelegateCommand<SearchContext>(_bookmarkService.Edit, c => !c.IsFromRepository);
             DeleteCommand = new DelegateCommand<SearchContext>(_bookmarkService.Remove, c => !c.IsFromRepository);
@@ -203,17 +203,8 @@ namespace logviewer.ViewModel
         /// <summary>
         /// Gets a value indicating a log is opened
         /// </summary>
-        public bool IsLogOpened => _log.Files.Length > 0;
+        public bool IsLogOpened => _logService.Log != null;
         
-        /// <summary>
-        /// Gets the command to update the index
-        /// </summary>
-        public ICommand ReindexCommand
-        {
-            get;
-            private set;
-        }
-
         /// <summary>
         /// Gets the command to delete a query
         /// </summary>
@@ -419,7 +410,7 @@ namespace logviewer.ViewModel
             }
             
             // index the log
-            await Task.Run(() => _log.Load(source, p => Invoke(p2 => ProgressHandler(this, new ProgressEventArgs(p2)), p), CancellationToken.None));
+            await Task.Run(() => _logService.Load(source, p => Invoke(p2 => ProgressHandler(this, new ProgressEventArgs(p2)), p), CancellationToken.None));
             RaisePropertyChanged(nameof(IsLogOpened));
 
             // reset the progress information

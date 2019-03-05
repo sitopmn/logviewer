@@ -23,6 +23,7 @@ using log4net;
 using System.Windows;
 using System.Collections.Specialized;
 using System.Windows.Threading;
+using logviewer.core.Interfaces;
 
 namespace logviewer.ViewModel
 {
@@ -57,7 +58,7 @@ namespace logviewer.ViewModel
         /// <summary>
         /// The log providing data
         /// </summary>
-        private readonly Interfaces.ILog _log;
+        private readonly ILogService _logService;
         
         /// <summary>
         /// The cancellation token to cancel running updates
@@ -72,14 +73,13 @@ namespace logviewer.ViewModel
         /// Initializes a new instance of the <see cref="SearchViewModel"/> class.
         /// </summary>
         /// <param name="messages">The message queue uesed to display snackbar messages</param>
-        /// <param name="log">The log providing data</param>
-        /// <param name="queryAssistant">Assistant for editing queries</param>
+        /// <param name="logService">The log providing data</param>
         [ImportingConstructor]
-        public SearchViewModel(ISnackbarMessageQueue messages, Interfaces.ILog log)
+        public SearchViewModel(ISnackbarMessageQueue messages, ILogService logService)
         {
             _messageQueue = messages;
-            _log = log;
-            _log.Loaded += (s, e) => Invoke(async () =>
+            _logService = logService;
+            _logService.Loaded += (s, e) => Invoke(async () =>
             {
                 InvalidateQuery();
                 await Update();
@@ -221,8 +221,11 @@ namespace logviewer.ViewModel
                 return;
             }
 
+            // get the log to work in
+            var log = _logService.Log;
+
             // if the log is updating everything we would do is for nothing...
-            if (_log.IsUpdating)
+            if (log == null || log.IsUpdating)
             {
                 return;
             }
@@ -236,7 +239,7 @@ namespace logviewer.ViewModel
             StartProgress();
 
             // update the log if required
-            _log.Update(UpdateProgress, newToken.Token);
+            log.Update(UpdateProgress, newToken.Token);
 
             // add a history entry to allow the user to return to earlier queries
             if (UserQuery != Search.Query)
@@ -261,7 +264,7 @@ namespace logviewer.ViewModel
                 try
                 {
                     InvalidateQuery();
-                    query = await Task.Run(() => _log.Query(Search.Query, UpdateProgress, newToken.Token));
+                    query = await Task.Run(() => log.Query(Search.Query, UpdateProgress, newToken.Token));
                     Search.Executor = query;
                 }
                 catch (OperationCanceledException)
@@ -341,7 +344,8 @@ namespace logviewer.ViewModel
         /// <param name="item">The record to show</param>
         public IList<ILogItem> GetDetailList(ILogItem item)
         {
-            var fullLog = _log.Query(string.Empty, null, CancellationToken.None);
+            var log = _logService.Log;
+            var fullLog = log.Query(string.Empty, null, CancellationToken.None);
             var index = fullLog.IndexOf(item);
             if (index >= 0)
             {
@@ -366,7 +370,8 @@ namespace logviewer.ViewModel
         /// <returns>The index of the item or -1</returns>
         public int GetDetailIndex(ILogItem item)
         {
-            var fullLog = _log.Query(string.Empty, null, CancellationToken.None);
+            var log = _logService.Log;
+            var fullLog = log.Query(string.Empty, null, CancellationToken.None);
             return fullLog.IndexOf(item);
         }
 
@@ -475,7 +480,7 @@ namespace logviewer.ViewModel
         /// <returns>True when data can be exported</returns>
         private bool SaveDataCommandCanExecute()
         {
-            return _log.Count > 0 && Rows.Count > 0;
+            return _logService.Log != null && Rows.Count > 0;
         }
 
         /// <summary>
@@ -489,7 +494,7 @@ namespace logviewer.ViewModel
             dlg.DefaultExt = "csv";
             dlg.Filter = "Comma Separated Value File (*.csv)|*.csv|Text File (*.txt)|*.txt";
 
-            var log = _log.Files.First();
+            var log = _logService.Log.Files.First();
             if (Directory.Exists(log))
             {
                 dlg.InitialDirectory = log;
