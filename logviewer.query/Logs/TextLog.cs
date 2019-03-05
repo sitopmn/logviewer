@@ -22,8 +22,7 @@ namespace logviewer.query
         /// <param name="settings">Application settings</param>
         /// <param name="index">Index to use</param>
         /// <param name="indexers">List of indexers used to process tokens</param>
-        [ImportingConstructor]
-        public TextLog(ISettings settings, InvertedIndex index, [ImportMany] IEnumerable<ILogIndexer> indexers)
+        public TextLog(ISettings settings, InvertedIndex index, IEnumerable<ILogIndexer> indexers)
             : base(settings, index, indexers)
         {
         }
