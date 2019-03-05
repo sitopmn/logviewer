@@ -17,8 +17,6 @@ namespace logviewer.query.Index
     /// <summary>
     /// A searchable inverted index for log files
     /// </summary>
-    [Export(typeof(ILogIndexer))]
-    [Export(typeof(InvertedIndex))]
     internal sealed class InvertedIndex : ILogIndexer
     {
         #region fields

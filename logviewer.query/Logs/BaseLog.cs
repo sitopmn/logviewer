@@ -76,12 +76,7 @@ namespace logviewer.query
         /// Notifies changes of the log
         /// </summary>
         public event NotifyCollectionChangedEventHandler CollectionChanged;
-
-        /// <summary>
-        /// Notifies the loading of a new log
-        /// </summary>
-        public event EventHandler Loaded;
-
+        
         /// <summary>
         /// Notifies changes of the log
         /// </summary>
@@ -132,14 +127,9 @@ namespace logviewer.query
 
             // initialize indexers
             for (var i = 0; i < _indexers.Length; i++) _indexers[i].Initialize();
-
-            // 
-
+            
             // and index the log
             Update(progress, cancellationToken);
-
-            // fire the loaded event when done
-            Loaded?.Invoke(this, EventArgs.Empty);
         }
         
         /// <summary>

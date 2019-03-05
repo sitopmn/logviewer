@@ -12,15 +12,6 @@ namespace logviewer.Interfaces
     /// </summary>
     public interface ILog : INotifyCollectionChanged, INotifyPropertyChanged
     {
-        #region events
-
-        /// <summary>
-        /// Notifies the loading of a new log
-        /// </summary>
-        event EventHandler Loaded;
-
-        #endregion
-
         #region properties
 
         /// <summary>
@@ -41,15 +32,7 @@ namespace logviewer.Interfaces
         #endregion
 
         #region public methods
-
-        /// <summary>
-        /// Load and index the given log files
-        /// </summary>
-        /// <param name="files">The files to index</param>
-        /// <param name="progress">Action to report indexing progress</param>
-        /// <param name="cancellationToken">CancellationToken for cancelling the index update</param>
-        void Load(string[] files, Action<double> progress, CancellationToken cancellationToken);
-
+        
         /// <summary>
         /// Updates the index for the log
         /// </summary>
@@ -76,40 +59,5 @@ namespace logviewer.Interfaces
         IEnumerable<ILogItem> Read(Action<double> progress, CancellationToken cancellation);
 
         #endregion
-    }
-
-    /// <summary>
-    /// Metadata for the exported log interfaces
-    /// </summary>
-    public interface ILogMetadata
-    {
-        /// <summary>
-        /// Gets the name of the log format
-        /// </summary>
-        string FormatName
-        {
-            get;
-        }
-    }
-
-    /// <summary>
-    /// Attribute for exporting log sources
-    /// </summary>
-    public class ExportLogAttribute : ExportAttribute, ILogMetadata
-    {
-        /// <summary>
-        /// Initializes a new instance of the <see cref="ExportLogAttribute"/> class
-        /// </summary>
-        /// <param name="formatName">Name of the log format</param>
-        public ExportLogAttribute(string formatName)
-            : base(typeof(ILog))
-        {
-            FormatName = formatName;
-        }
-
-        /// <summary>
-        /// Gets the name of the log format
-        /// </summary>
-        public string FormatName { get; }
     }
 }

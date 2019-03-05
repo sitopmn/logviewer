@@ -74,6 +74,7 @@
     <Compile Include="Interfaces\ILogIndexer.cs" />
     <Compile Include="Interfaces\IParser.cs" />
     <Compile Include="Logs\TextLog.cs" />
+    <Compile Include="Logs\TextLogFactory.cs" />
     <Compile Include="Nodes\ParseNode.cs" />
     <Compile Include="Parsing\CsvParser.cs" />
     <Compile Include="Parsing\JsonParser.cs" />

@@ -408,12 +408,20 @@ namespace logviewer.ViewModel
 
                 source = dlg.FileNames;
             }
-            
-            // index the log
-            await Task.Run(() => _logService.Load(source, p => Invoke(p2 => ProgressHandler(this, new ProgressEventArgs(p2)), p), CancellationToken.None));
-            RaisePropertyChanged(nameof(IsLogOpened));
 
+            // index the log
+            try
+            {
+                await Task.Run(() => _logService.Load(source, p => Invoke(p2 => ProgressHandler(this, new ProgressEventArgs(p2)), p), CancellationToken.None));
+            }
+            catch (Exception ex)
+            {
+                MessageQueue.Enqueue(ex.Message);
+                _logger.Error($"An error occurred while loading: {ex.Message}");
+            }
+            
             // reset the progress information
+            RaisePropertyChanged(nameof(IsLogOpened));
             ProgressHandler(this, ProgressEventArgs.End);
 
             // update the current view

@@ -19,31 +19,31 @@ namespace logviewer.Services
         /// <summary>
         /// The actual log wrapped by the log service
         /// </summary>
-        private readonly ILog _log;
+        private readonly IReadOnlyList<ILogFactory> _factories;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="LogService"/> class
         /// </summary>
-        /// <param name="log">The log instance wrapped by the log service instance</param>
+        /// <param name="factories">Enumerable of factories for creating logs</param>
         [ImportingConstructor]
-        public LogService(ILog log)
+        public LogService([ImportMany] IEnumerable<ILogFactory> factories)
         {
-            _log = log;
+            _factories = factories.ToList();
         }
 
         /// <summary>
         /// Gets the loaded log
         /// </summary>
-        public ILog Log => _log.Files.Length > 0 ? _log : null;
-
-        /// <summary>
-        /// Gets a list of supported formats
-        /// </summary>
-        public IEnumerable<string> Formats
+        public ILog Log
         {
             get;
             private set;
         }
+
+        /// <summary>
+        /// Gets a list of supported formats
+        /// </summary>
+        public IEnumerable<string> Formats => _factories.Select(f => f.Name);
 
         /// <summary>
         /// Fires when a log was loaded
@@ -59,7 +59,7 @@ namespace logviewer.Services
         public void Load(string[] source, Action<double> progress, CancellationToken cancellation)
         {
             var format = DetectLogFormat(source);
-            if (!string.IsNullOrEmpty(format))
+            if (string.IsNullOrEmpty(format))
             {
                 throw new NotSupportedException("The log format could not be detected automatically");
             }
@@ -76,8 +76,15 @@ namespace logviewer.Services
         /// <param name="cancellation">Token for cancelling the operation</param>
         public void Load(string[] source, string format, Action<double> progress, CancellationToken cancellation)
         {
+            // get the factory for the given format
+            var factory = _factories.FirstOrDefault(f => f.Name == format);
+            if (factory == null)
+            {
+                throw new ArgumentException("The given log format is not known");
+            }
+            
             // load the log
-            _log.Load(source, progress, cancellation);
+            Log = factory.Create(source, progress, cancellation);
 
             // fire the loaded event
             Loaded?.Invoke(this, EventArgs.Empty);
@@ -90,7 +97,15 @@ namespace logviewer.Services
         /// <returns>Name of the format or <see cref="string.Empty"/> if it couldn't be detected</returns>
         private string DetectLogFormat(string[] source)
         {
-            return string.Empty;
+            var factory = _factories.FirstOrDefault(f => f.IsSupported(source));
+            if (factory != null)
+            {
+                return factory.Name;
+            }
+            else
+            {
+                return string.Empty;
+            }
         }
     }
 }
