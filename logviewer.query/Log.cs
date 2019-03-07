@@ -351,17 +351,33 @@ namespace logviewer.query
                             archive.Dispose();
                         }
 
-                        stream = new FileStream(indexEnumerator.Current.File, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
-                        readerFile = indexEnumerator.Current.File;
-                        readerMember = string.Empty;
-                        readerPosition = 0;
-                        readerLine = 0;
+                        try
+                        {
+                            stream = new FileStream(indexEnumerator.Current.File, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+                            readerFile = indexEnumerator.Current.File;
+                            readerMember = string.Empty;
+                            readerPosition = 0;
+                            readerLine = 0;
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.Error($"Log::Read(): Error while opening {indexEnumerator.Current.File}: {ex.Message}");
+                            break;
+                        }
 
                         if (!string.IsNullOrEmpty(indexEnumerator.Current.Member))
                         {
-                            archive = new ZipArchive(stream);
-                            stream = archive.GetEntry(indexEnumerator.Current.Member).Open();
-                            readerMember = indexEnumerator.Current.Member;
+                            try
+                            {
+                                archive = new ZipArchive(stream);
+                                stream = archive.GetEntry(indexEnumerator.Current.Member).Open();
+                                readerMember = indexEnumerator.Current.Member;
+                            }
+                            catch (Exception ex)
+                            {
+                                _logger.Error($"Log::Read(): Error while opening {indexEnumerator.Current.File}::{indexEnumerator.Current.Member}: {ex.Message}");
+                                break;
+                            }
                         }
                     }
 
@@ -373,28 +389,63 @@ namespace logviewer.query
                             stream.Dispose();
                             reader = null;
                         }
-                        
-                        stream = archive.GetEntry(indexEnumerator.Current.Member).Open();
-                        readerMember = indexEnumerator.Current.Member;
-                        readerPosition = 0;
-                        readerLine = 0;
-                    }
 
+                        try
+                        {
+                            stream = archive.GetEntry(indexEnumerator.Current.Member).Open();
+                            readerMember = indexEnumerator.Current.Member;
+                            readerPosition = 0;
+                            readerLine = 0;
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.Error($"Log::Read(): Error while opening {indexEnumerator.Current.File}::{indexEnumerator.Current.Member}: {ex.Message}");
+                            break;
+                        }
+                    }
+                    
                     // create the reader if not yet created
                     if (reader == null)
                     {
-                        reader = new CountingReader(stream, p => progress?.Invoke(p, _progressMaximum), cancellation);
+                        try
+                        {
+                            reader = new CountingReader(stream, p => progress?.Invoke(p, _progressMaximum), cancellation);
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.Error($"Log::Read(): Error while creating reader for {indexEnumerator.Current.File}::{indexEnumerator.Current.Member}: {ex.Message}");
+                            break;
+                        }
                     }
 
                     // the current index entry points to a position further into the file
                     if (indexEnumerator.Current.Position > readerPosition)
                     {
-                        readerPosition = reader.Seek(indexEnumerator.Current.Position, SeekOrigin.Begin);
-                        readerLine = indexEnumerator.Current.Line;
+                        try
+                        {
+                            readerPosition = reader.Seek(indexEnumerator.Current.Position, SeekOrigin.Begin);
+                            readerLine = indexEnumerator.Current.Line;
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.Error($"Log::Read(): Error while seeking in {indexEnumerator.Current.File}::{indexEnumerator.Current.Member}: {ex.Message}");
+                            break;
+                        }
                     }
 
-                    // read data
-                    var data = reader.ReadLine(out readerBytes);
+                    // read the line
+                    string data;
+                    try
+                    {
+                        data = reader.ReadLine(out readerBytes);
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.Error($"Log::Read(): Error while creating reader for {indexEnumerator.Current.File}::{indexEnumerator.Current.Member}: {ex.Message}");
+                        break;
+                    }
+
+                    // return the log item
                     yield return new LogItem(data, readerFile, readerMember, readerPosition, readerLine);
                     readerPosition += readerBytes;
                     readerLine += 1;

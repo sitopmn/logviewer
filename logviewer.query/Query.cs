@@ -202,7 +202,7 @@ namespace logviewer.query
         /// <returns>The index of the given item or -1 if it is not found</returns>
         public override int IndexOf(ILogItem item)
         {
-            if (IsExecuted)
+            if (item != null && IsExecuted)
             {
                 if (_mode == EvaluationMode.Aggregate)
                 {
