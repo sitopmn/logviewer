@@ -76,6 +76,36 @@ namespace logviewer.query.Index
         #region ILogIndexer implementation
 
         /// <summary>
+        /// Remove a file from the index
+        /// </summary>
+        /// <param name="file">Name of the file to remove</param>
+        /// <param name="member">Name of the archive member to remove</param>
+        public void Remove(string file, string member)
+        {
+            // lock the index while modifying
+            lock (_locker)
+            {
+                if (_lines.Any(f => f.File == file && f.Member == member))
+                {
+                    // remove lines
+                    foreach (var f in _lines.OrderBy(f => f.File, _comparer).ThenBy(f => f.Member, _comparer).SkipWhile(f => f.File != file || f.Member != member))
+                    {
+                        _lines.Remove(f);
+                    }
+
+                    // remove tokens
+                    foreach (var token in _tokens)
+                    {
+                        foreach (var f in token.Value.OrderBy(f => f.File, _comparer).ThenBy(f => f.Member, _comparer).SkipWhile(f => f.File != file || f.Member != member))
+                        {
+                            token.Value.Remove(f);
+                        }
+                    }
+                }
+            }
+        }
+
+        /// <summary>
         /// Reset the index before a new log is indexed
         /// </summary>
         public void Initialize()
@@ -102,27 +132,7 @@ namespace logviewer.query.Index
             // remove data associated with the file if it is not to be appended
             if (!append)
             {
-                // lock the index while modifying
-                lock (_locker)
-                {
-                    if (_lines.Any(f => f.File == file && f.Member == member))
-                    {
-                        // remove lines
-                        foreach (var f in _lines.OrderBy(f => f.File, _comparer).ThenBy(f => f.Member, _comparer).SkipWhile(f => f.File != file || f.Member != member))
-                        {
-                            _lines.Remove(f);
-                        }
-
-                        // remove tokens
-                        foreach (var token in _tokens)
-                        {
-                            foreach (var f in token.Value.OrderBy(f => f.File, _comparer).ThenBy(f => f.Member, _comparer).SkipWhile(f => f.File != file || f.Member != member))
-                            {
-                                token.Value.Remove(f);
-                            }
-                        }
-                    }
-                }
+                Remove(file, member);
             }
 
             // create the indexer state

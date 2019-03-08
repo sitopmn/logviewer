@@ -141,14 +141,24 @@ namespace logviewer.query
             var updated = false;
             IsUpdating = true;
 
+            // find all files of the log on disk
+            var files = FindFiles();
+
+            // remove indexed file which are no longer present
+            foreach (var file in _index.Files.Where(f => !files.Any(p => p.Item1 == f.Item1 && p.Item2 == f.Item2)))
+            {
+                _index.Remove(file.Item1, file.Item2);
+                updated = true;
+            }
+
             // find the files which were changed since the last indexing or which are not present in the index
             var indexFiles = _index.Files;
             var indexTimestamp = indexFiles.Select(f => f.Item3).Concat(new[] { DateTime.MinValue }).Max();
-            var changedFiles = FindFiles()
-                .GroupJoin(indexFiles, f => f.Item1 + f.Item2, f => f.Item1 + f.Item2, (file, index) => new { file, index = index.FirstOrDefault() })
-                .Where(a => a.index == null || a.file.Item3 > a.index.Item3)
-                .Select(a => a.file)
-                .ToList();
+            var changedFiles = files
+            .GroupJoin(indexFiles, f => f.Item1 + f.Item2, f => f.Item1 + f.Item2, (file, index) => new { file, index = index.FirstOrDefault() })
+            .Where(a => a.index == null || a.file.Item3 > a.index.Item3)
+            .Select(a => a.file)
+            .ToList();
 
             // when the tailing log file has changed just process the new lines, otherwise completely index all changed files
             if (changedFiles.Count > 0)
@@ -216,9 +226,14 @@ namespace logviewer.query
                     _indexers[i].Complete();
                 }
 
-                // send the collection changed event
-                CollectionChanged?.Invoke(this, new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Reset));
+                
                 updated = true;
+            }
+
+            // send the collection changed event
+            if (updated)
+            {
+                CollectionChanged?.Invoke(this, new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Reset));
             }
 
             sw.Stop();
