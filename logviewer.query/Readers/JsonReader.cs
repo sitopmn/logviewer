@@ -25,18 +25,30 @@ namespace logviewer.query.Readers
         {
         }
 
+        protected Document ReadDocument()
+        {
+            // read whitespace or comments
+            while (ReadWhitespace() || ReadComment()) ;
+
+            // read a separator character
+            ReadOne(',', '\x1E');
+
+            // read the document value
+            return ReadObject();
+        }
+
         /// <summary>
         /// Reads a single json object
         /// </summary>
         /// <returns>A <see cref="Document"/> containing the document data</returns>
-        protected Document ReadObject()
+        private Document ReadObject()
         {
             var doc = new Document();
             doc.Fields = new List<Field>();
 
             // read whitespace or comments
             while (ReadWhitespace() || ReadComment()) ;
-
+            
             // store the starting position of the document
             doc.Position = Position;
             
@@ -107,7 +119,7 @@ namespace logviewer.query.Readers
             {
                 return Document.Empty;
             }
-
+            
             return doc;
         }
 

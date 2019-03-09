@@ -147,6 +147,76 @@ namespace logviewer.test.Readers
         }
 
         [TestMethod]
+        public void ConcatedatedObjectsRead()
+        {
+            var objects = ReadObjects("{ \"key\" : 1 }{ \"key\" : 2 }").ToArray();
+
+            Assert.AreEqual(2, objects.Length);
+
+            Assert.AreEqual(1, objects[0].Count);
+            Assert.AreEqual("1", objects[0]["key"]);
+
+            Assert.AreEqual(1, objects[1].Count);
+            Assert.AreEqual("2", objects[1]["key"]);
+        }
+
+        [TestMethod]
+        public void WhitespaceSeparatedObjectsRead()
+        {
+            var objects = ReadObjects("{ \"key\" : 1 }\t{ \"key\" : 2 }").ToArray();
+
+            Assert.AreEqual(2, objects.Length);
+
+            Assert.AreEqual(1, objects[0].Count);
+            Assert.AreEqual("1", objects[0]["key"]);
+
+            Assert.AreEqual(1, objects[1].Count);
+            Assert.AreEqual("2", objects[1]["key"]);
+        }
+
+        [TestMethod]
+        public void NewlineSeparatedObjectsRead()
+        {
+            var objects = ReadObjects("{ \"key\" : 1 }\r\n{ \"key\" : 2 }\r\n").ToArray();
+
+            Assert.AreEqual(2, objects.Length);
+
+            Assert.AreEqual(1, objects[0].Count);
+            Assert.AreEqual("1", objects[0]["key"]);
+
+            Assert.AreEqual(1, objects[1].Count);
+            Assert.AreEqual("2", objects[1]["key"]);
+        }
+
+        [TestMethod]
+        public void CommaSeparatedObjectsRead()
+        {
+            var objects = ReadObjects("{ \"key\" : 1 },{ \"key\" : 2 },").ToArray();
+
+            Assert.AreEqual(2, objects.Length);
+
+            Assert.AreEqual(1, objects[0].Count);
+            Assert.AreEqual("1", objects[0]["key"]);
+
+            Assert.AreEqual(1, objects[1].Count);
+            Assert.AreEqual("2", objects[1]["key"]);
+        }
+
+        [TestMethod]
+        public void RecordSeparatorSeparatedObjectsRead()
+        {
+            var objects = ReadObjects("\x1E{ \"key\" : 1 }\n\x1E{ \"key\" : 2 }\n").ToArray();
+
+            Assert.AreEqual(2, objects.Length);
+
+            Assert.AreEqual(1, objects[0].Count);
+            Assert.AreEqual("1", objects[0]["key"]);
+
+            Assert.AreEqual(1, objects[1].Count);
+            Assert.AreEqual("2", objects[1]["key"]);
+        }
+
+        [TestMethod]
         public void Benchmark()
         {
             var data = string.Join("\n", Enumerable.Range(0, 10000).Select(i => "{ \"key\" : \"value\" }"));
@@ -192,7 +262,7 @@ namespace logviewer.test.Readers
             {
                 while (true)
                 {
-                    var doc = ReadObject();
+                    var doc = ReadDocument();
                     if (doc.Position < 0)
                     {
                         yield break;
@@ -206,7 +276,7 @@ namespace logviewer.test.Readers
 
             public override Dictionary<string, string> Read()
             {
-                var doc = ReadObject();
+                var doc = ReadDocument();
                 if (doc.Position < 0)
                 {
                     return null;
