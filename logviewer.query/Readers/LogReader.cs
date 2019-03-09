@@ -66,6 +66,7 @@ namespace logviewer.query.Readers
         /// Initializes a new instance of the <see cref="BaseReader"/> class
         /// </summary>
         /// <param name="stream">Stream providing the source data</param>
+        /// <param name="encoding">Encoding of the source data</param>
         /// <param name="file">Name of the file</param>
         /// <param name="member">Name of the archive member if the file is an archive</param>
         protected LogReader(Stream stream, Encoding encoding, string file, string member)
