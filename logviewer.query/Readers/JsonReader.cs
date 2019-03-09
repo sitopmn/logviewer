@@ -427,6 +427,7 @@ namespace logviewer.query.Readers
                 }
                 else if (delim.Contains((char)c))
                 {
+                    ReadChar();
                     return true;
                 }
                 else

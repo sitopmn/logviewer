@@ -217,6 +217,20 @@ namespace logviewer.test.Readers
         }
 
         [TestMethod]
+        public void CommentsBetweenDocumentsSkipped()
+        {
+            var objects = ReadObjects("/* 1 */\n{ \"key\" : 1 }\n/* 2 */\n{ \"key\" : 2 }\n").ToArray();
+
+            Assert.AreEqual(2, objects.Length);
+
+            Assert.AreEqual(1, objects[0].Count);
+            Assert.AreEqual("1", objects[0]["key"]);
+
+            Assert.AreEqual(1, objects[1].Count);
+            Assert.AreEqual("2", objects[1]["key"]);
+        }
+
+        [TestMethod]
         public void Benchmark()
         {
             var data = string.Join("\n", Enumerable.Range(0, 10000).Select(i => "{ \"key\" : \"value\" }"));
