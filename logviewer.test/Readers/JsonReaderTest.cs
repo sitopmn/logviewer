@@ -20,7 +20,7 @@ namespace logviewer.test.Readers
 
             Assert.AreEqual(1, objects.Length);
 
-            Assert.AreEqual(1, objects[0].Count);
+            Assert.AreEqual(2, objects[0].Count);
             Assert.AreEqual("value", objects[0]["key"]);
         }
 
@@ -31,7 +31,7 @@ namespace logviewer.test.Readers
 
             Assert.AreEqual(1, objects.Length);
 
-            Assert.AreEqual(1, objects[0].Count);
+            Assert.AreEqual(2, objects[0].Count);
             Assert.AreEqual("4711", objects[0]["key"]);
         }
 
@@ -42,7 +42,7 @@ namespace logviewer.test.Readers
 
             Assert.AreEqual(1, objects.Length);
 
-            Assert.AreEqual(1, objects[0].Count);
+            Assert.AreEqual(2, objects[0].Count);
             Assert.AreEqual("true", objects[0]["key"]);
         }
 
@@ -53,7 +53,7 @@ namespace logviewer.test.Readers
 
             Assert.AreEqual(1, objects.Length);
 
-            Assert.AreEqual(1, objects[0].Count);
+            Assert.AreEqual(2, objects[0].Count);
             Assert.AreEqual("false", objects[0]["key"]);
         }
 
@@ -64,7 +64,7 @@ namespace logviewer.test.Readers
 
             Assert.AreEqual(1, objects.Length);
 
-            Assert.AreEqual(1, objects[0].Count);
+            Assert.AreEqual(2, objects[0].Count);
             Assert.AreEqual("null", objects[0]["key"]);
         }
         
@@ -75,7 +75,7 @@ namespace logviewer.test.Readers
 
             Assert.AreEqual(1, objects.Length);
 
-            Assert.AreEqual(4, objects[0].Count);
+            Assert.AreEqual(5, objects[0].Count);
             Assert.AreEqual("1234", objects[0]["key.test"]);
             Assert.AreEqual("bar", objects[0]["key.foo"]);
             Assert.AreEqual("4321", objects[0]["key.bang.test"]);
@@ -89,7 +89,7 @@ namespace logviewer.test.Readers
 
             Assert.AreEqual(1, objects.Length);
 
-            Assert.AreEqual(2, objects[0].Count);
+            Assert.AreEqual(3, objects[0].Count);
             Assert.AreEqual("1234", objects[0]["key"]);
             Assert.AreEqual("[...]", objects[0]["array"]);
         }
@@ -101,7 +101,7 @@ namespace logviewer.test.Readers
 
             Assert.AreEqual(1, objects.Length);
 
-            Assert.AreEqual(2, objects[0].Count);
+            Assert.AreEqual(3, objects[0].Count);
             Assert.AreEqual("4711", objects[0]["key1"]);
             Assert.AreEqual("mygreatvalue", objects[0]["key2"]);
         }
@@ -153,10 +153,10 @@ namespace logviewer.test.Readers
 
             Assert.AreEqual(2, objects.Length);
 
-            Assert.AreEqual(1, objects[0].Count);
+            Assert.AreEqual(2, objects[0].Count);
             Assert.AreEqual("1", objects[0]["key"]);
 
-            Assert.AreEqual(1, objects[1].Count);
+            Assert.AreEqual(2, objects[1].Count);
             Assert.AreEqual("2", objects[1]["key"]);
         }
 
@@ -167,10 +167,10 @@ namespace logviewer.test.Readers
 
             Assert.AreEqual(2, objects.Length);
 
-            Assert.AreEqual(1, objects[0].Count);
+            Assert.AreEqual(2, objects[0].Count);
             Assert.AreEqual("1", objects[0]["key"]);
 
-            Assert.AreEqual(1, objects[1].Count);
+            Assert.AreEqual(2, objects[1].Count);
             Assert.AreEqual("2", objects[1]["key"]);
         }
 
@@ -181,10 +181,10 @@ namespace logviewer.test.Readers
 
             Assert.AreEqual(2, objects.Length);
 
-            Assert.AreEqual(1, objects[0].Count);
+            Assert.AreEqual(2, objects[0].Count);
             Assert.AreEqual("1", objects[0]["key"]);
 
-            Assert.AreEqual(1, objects[1].Count);
+            Assert.AreEqual(2, objects[1].Count);
             Assert.AreEqual("2", objects[1]["key"]);
         }
 
@@ -195,10 +195,10 @@ namespace logviewer.test.Readers
 
             Assert.AreEqual(2, objects.Length);
 
-            Assert.AreEqual(1, objects[0].Count);
+            Assert.AreEqual(2, objects[0].Count);
             Assert.AreEqual("1", objects[0]["key"]);
 
-            Assert.AreEqual(1, objects[1].Count);
+            Assert.AreEqual(2, objects[1].Count);
             Assert.AreEqual("2", objects[1]["key"]);
         }
 
@@ -209,10 +209,10 @@ namespace logviewer.test.Readers
 
             Assert.AreEqual(2, objects.Length);
 
-            Assert.AreEqual(1, objects[0].Count);
+            Assert.AreEqual(2, objects[0].Count);
             Assert.AreEqual("1", objects[0]["key"]);
 
-            Assert.AreEqual(1, objects[1].Count);
+            Assert.AreEqual(2, objects[1].Count);
             Assert.AreEqual("2", objects[1]["key"]);
         }
 
@@ -223,10 +223,10 @@ namespace logviewer.test.Readers
 
             Assert.AreEqual(2, objects.Length);
 
-            Assert.AreEqual(1, objects[0].Count);
+            Assert.AreEqual(2, objects[0].Count);
             Assert.AreEqual("1", objects[0]["key"]);
 
-            Assert.AreEqual(1, objects[1].Count);
+            Assert.AreEqual(2, objects[1].Count);
             Assert.AreEqual("2", objects[1]["key"]);
         }
 
@@ -260,46 +260,9 @@ namespace logviewer.test.Readers
             Trace.WriteLine($"10000 JSON objects read using Newtonsoft.Json in {sw.ElapsedMilliseconds}ms");
         }
 
-        private IEnumerable<Dictionary<string, string>> ReadObjects(string json)
+        private IEnumerable<Dictionary<string, object>> ReadObjects(string json)
         {
-            return new TestReader(json).ReadAll();
-        }
-        
-        private class TestReader : JsonReader<Dictionary<string, string>>
-        {
-            public TestReader(string json) 
-                : base(new MemoryStream(Encoding.Default.GetBytes(json)), Encoding.Default, string.Empty, string.Empty)
-            {
-            }
-
-            public override IEnumerable<Dictionary<string, string>> ReadAll()
-            {
-                while (true)
-                {
-                    var doc = ReadDocument();
-                    if (doc.Position < 0)
-                    {
-                        yield break;
-                    }
-                    else
-                    {
-                        yield return doc.Fields.ToDictionary(f => f.Name, f => f.Value);
-                    }
-                }
-            }
-
-            public override Dictionary<string, string> Read()
-            {
-                var doc = ReadDocument();
-                if (doc.Position < 0)
-                {
-                    return null;
-                }
-                else
-                {
-                    return doc.Fields.ToDictionary(f => f.Name, f => f.Value);
-                }
-            }
+            return new JsonItemReader(new MemoryStream(Encoding.Default.GetBytes(json)), Encoding.Default, string.Empty, string.Empty).ReadAll().Select(f => f.Fields);
         }
     }
 }

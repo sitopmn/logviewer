@@ -1,4 +1,5 @@
-﻿using System;
+﻿using logviewer.Interfaces;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -10,8 +11,7 @@ namespace logviewer.query.Readers
     /// <summary>
     /// Implementation of a reader parsing a reduced subset of JSON (arrays are intentionally not supported as they are difficult to represent here)
     /// </summary>
-    /// <typeparam name="T"></typeparam>
-    internal abstract class JsonReader<T> : LogReader<T>
+    internal class JsonItemReader : ParseReader<ILogItem>
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="JsonReader{T}"/> class
@@ -20,12 +20,16 @@ namespace logviewer.query.Readers
         /// <param name="encoding">Encoding of the source stream</param>
         /// <param name="file">File providing the source stream</param>
         /// <param name="member">Archive member providing the source stream</param>
-        protected JsonReader(Stream stream, Encoding encoding, string file, string member) 
+        public JsonItemReader(Stream stream, Encoding encoding, string file, string member) 
             : base(stream, encoding, file, member)
         {
         }
 
-        protected Document ReadDocument()
+        /// <summary>
+        /// Reads a single log item
+        /// </summary>
+        /// <returns>A log item</returns>
+        public override ILogItem Read()
         {
             // read whitespace or comments
             while (ReadWhitespace() || ReadComment()) ;
@@ -34,9 +38,22 @@ namespace logviewer.query.Readers
             ReadOne(',', '\x1E');
 
             // read the document value
-            return ReadObject();
-        }
+            var obj = ReadObject();
+            if (obj.Position < 0)
+            {
+                return null;
+            }
 
+            // create a log item for the document
+            var item = new LogItem(string.Empty, File, Member, obj.Position, 0);
+            foreach (var f in obj.Fields)
+            {
+                item.Fields.Add(f.Name, f.Value);
+            }
+
+            return item;
+        }
+        
         /// <summary>
         /// Reads a single json object
         /// </summary>
@@ -366,74 +383,6 @@ namespace logviewer.query.Readers
             else
             {
                 return false;
-            }
-        }
-
-        /// <summary>
-        /// Reads a literal string
-        /// </summary>
-        /// <param name="sequence">String to read</param>
-        /// <returns>True if the string was read</returns>
-        private bool ReadLiteral(string sequence)
-        {
-            if (PeekChar() != sequence[0])
-            {
-                return false;
-            }
-
-            foreach (var c in sequence)
-            {
-                if (ReadChar() != c)
-                {
-                    return false;
-                }
-            }
-
-            return true;
-        }
-
-        /// <summary>
-        /// Reads one of multiple characters
-        /// </summary>
-        /// <param name="chars">Array with alternative characters</param>
-        /// <returns>True if one of the given characters was read</returns>
-        private bool ReadOne(params char[] chars)
-        {
-            var c = PeekChar();
-            if (chars.Contains((char)c))
-            {
-                ReadChar();
-                return true;
-            }
-            else
-            {
-                return false;
-            }
-        }
-
-        /// <summary>
-        /// Reads until one of the given characters is encountered
-        /// </summary>
-        /// <param name="delim">Charaters to delimit</param>
-        /// <returns>True if one of the given characters was encountered</returns>
-        private bool ReadUntil(params char[] delim)
-        {
-            while (true)
-            {
-                var c = PeekChar();
-                if (c < 0)
-                {
-                    return false;
-                }
-                else if (delim.Contains((char)c))
-                {
-                    ReadChar();
-                    return true;
-                }
-                else
-                {
-                    ReadChar();
-                }
             }
         }
 

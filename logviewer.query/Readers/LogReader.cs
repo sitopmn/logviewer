@@ -226,9 +226,19 @@ namespace logviewer.query.Readers
         /// <returns>Enumerable returning all elements in the source</returns>
         public virtual IEnumerable<T> ReadAll()
         {
+            var comparer = EqualityComparer<T>.Default;
+            var def = default(T);
             while (!EndOfStream)
             {
-                yield return Read();
+                var item = Read();
+                if (comparer.Equals(item, def))
+                {
+                    break;
+                }
+                else
+                {
+                    yield return item;
+                }
             }
         }
 
