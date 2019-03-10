@@ -81,10 +81,10 @@
     <Compile Include="Parsing\JsonParser.cs" />
     <Compile Include="Parsing\TestParser.cs" />
     <Compile Include="Readers\JsonItemReader.cs" />
+    <Compile Include="Readers\JsonTokenReader.cs" />
     <Compile Include="Readers\LineItemReader.cs" />
     <Compile Include="Readers\LineTokenReader.cs" />
     <Compile Include="Readers\LogReader.cs" />
-    <Compile Include="Readers\ParseReader.cs" />
     <Compile Include="SpracheExtensions.cs" />
     <Compile Include="QueryFactory.cs" />
     <Compile Include="NodeExtensions.cs" />

@@ -93,7 +93,7 @@ namespace logviewer.query.Readers
                 _state = 0;
 
                 // return the token for the first line
-                buffer[offset++] = CreateNewlineToken(0);
+                buffer[offset++] = CreateItemToken(0);
                 count -= 1;
             }
 
@@ -193,13 +193,13 @@ namespace logviewer.query.Readers
                         }
                         else if (c == '\n')
                         {
-                            buffer[offset++] = CreateNewlineToken(position);
+                            buffer[offset++] = CreateItemToken(position);
                             count -= 1;
                             _state = c;
                         }
                         else if (isLetter || isDigit)
                         {
-                            buffer[offset++] = CreateNewlineToken(position);
+                            buffer[offset++] = CreateItemToken(position);
                             count -= 1;
                             _state = 1;
                             _token.Clear();
@@ -208,7 +208,7 @@ namespace logviewer.query.Readers
                         }
                         else
                         {
-                            buffer[offset++] = CreateNewlineToken(position);
+                            buffer[offset++] = CreateItemToken(position);
                             count -= 1;
                             _state = 0;
                         }
@@ -222,13 +222,13 @@ namespace logviewer.query.Readers
                         }
                         else if (c == '\r')
                         {
-                            buffer[offset++] = CreateNewlineToken(position);
+                            buffer[offset++] = CreateItemToken(position);
                             count -= 1;
                             _state = c;
                         }
                         else if (isLetter || isDigit)
                         {
-                            buffer[offset++] = CreateNewlineToken(position);
+                            buffer[offset++] = CreateItemToken(position);
                             count -= 1;
                             _state = 1;
                             _token.Clear();
@@ -237,7 +237,7 @@ namespace logviewer.query.Readers
                         }
                         else
                         {
-                            buffer[offset++] = CreateNewlineToken(position);
+                            buffer[offset++] = CreateItemToken(position);
                             count -= 1;
                             _state = 0;
                         }
@@ -245,7 +245,7 @@ namespace logviewer.query.Readers
 
                     // second character of line break
                     case 14:
-                        buffer[offset++] = CreateNewlineToken(position);
+                        buffer[offset++] = CreateItemToken(position);
                         count -= 1;
 
                         if (c == '\r' || c == '\n')
@@ -306,7 +306,7 @@ namespace logviewer.query.Readers
         /// <param name="member">The archive member the line was read from</param>
         /// <param name="position">The starting offset of the token</param>
         /// <returns></returns>
-        private Token CreateNewlineToken(long position)
+        private Token CreateItemToken(long position)
         {
             return new Token() { Type = ETokenType.Item, File = File, Member = Member, Position = position, IsExact = true };
         }

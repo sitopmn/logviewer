@@ -64,9 +64,10 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="PatternTest.cs" />
     <Compile Include="Readers\BaseReaderTest.cs" />
+    <Compile Include="Readers\JsonTokenReaderTest.cs" />
     <Compile Include="Readers\LineItemReaderTest.cs" />
     <Compile Include="Readers\LineTokenReaderTest.cs" />
-    <Compile Include="Readers\JsonReaderTest.cs" />
+    <Compile Include="Readers\JsonItemReaderTest.cs" />
     <Compile Include="VirtualListTest.cs" />
   </ItemGroup>
   <ItemGroup>

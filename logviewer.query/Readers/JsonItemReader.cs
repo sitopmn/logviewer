@@ -11,7 +11,7 @@ namespace logviewer.query.Readers
     /// <summary>
     /// Implementation of a reader parsing a reduced subset of JSON (arrays are intentionally not supported as they are difficult to represent here)
     /// </summary>
-    internal class JsonItemReader : ParseReader<ILogItem>
+    internal class JsonItemReader : LogReader<ILogItem>
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="JsonReader{T}"/> class
@@ -94,7 +94,7 @@ namespace logviewer.query.Readers
                 // read the separator
                 if (!ReadOne(':'))
                 {
-                    return Document.Empty;
+                    break;
                 }
 
                 // read whitespace or comments
@@ -115,7 +115,7 @@ namespace logviewer.query.Readers
                 }
                 else
                 {
-                    return Document.Empty;
+                    break;
                 }
                 
                 // read whitespace or comments
@@ -134,7 +134,11 @@ namespace logviewer.query.Readers
             // read the closing bracket
             if (!ReadOne('}'))
             {
-                return Document.Empty;
+                // the closing bracket was not found, try to read until we find it to skip to the end of the object
+                if (!ReadUntil('}'))
+                {
+                    return Document.Empty;
+                }
             }
             
             return doc;
@@ -340,7 +344,120 @@ namespace logviewer.query.Readers
 
             return builder.ToString();
         }
-        
+
+        /// <summary>
+        /// Reads a comment
+        /// </summary>
+        /// <returns>True if the comment was read</returns>
+        protected bool ReadComment()
+        {
+            if (ReadOne('/'))
+            {
+                if (ReadOne('/'))
+                {
+                    ReadUntil('\r', '\n');
+                    return true;
+                }
+                else if (ReadOne('*'))
+                {
+                    while (ReadUntil('*'))
+                    {
+                        if (ReadOne('/'))
+                        {
+                            return true;
+                        }
+                    }
+                }
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// Reads whitespace
+        /// </summary>
+        /// <returns>True if whitespace was read</returns>
+        protected bool ReadWhitespace()
+        {
+            if (char.IsWhiteSpace((char)PeekChar()))
+            {
+                ReadChar();
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Reads a literal string
+        /// </summary>
+        /// <param name="sequence">String to read</param>
+        /// <returns>True if the string was read</returns>
+        protected bool ReadLiteral(string sequence)
+        {
+            if (PeekChar() != sequence[0])
+            {
+                return false;
+            }
+
+            foreach (var c in sequence)
+            {
+                if (ReadChar() != c)
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        /// <summary>
+        /// Reads one of multiple characters
+        /// </summary>
+        /// <param name="chars">Array with alternative characters</param>
+        /// <returns>True if one of the given characters was read</returns>
+        protected bool ReadOne(params char[] chars)
+        {
+            var c = PeekChar();
+            if (chars.Contains((char)c))
+            {
+                ReadChar();
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Reads until one of the given characters is encountered
+        /// </summary>
+        /// <param name="delim">Charaters to delimit</param>
+        /// <returns>True if one of the given characters was encountered</returns>
+        protected bool ReadUntil(params char[] delim)
+        {
+            while (true)
+            {
+                var c = PeekChar();
+                if (c < 0)
+                {
+                    return false;
+                }
+                else if (delim.Contains((char)c))
+                {
+                    ReadChar();
+                    return true;
+                }
+                else
+                {
+                    ReadChar();
+                }
+            }
+        }
+
         /// <summary>
         /// Struct representing a document
         /// </summary>
