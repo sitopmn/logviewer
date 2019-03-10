@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace logviewer.query.Readers
 {
-    internal class JsonTokenReader : ParseReader<Token>
+    internal class JsonTokenReader : LogReader<Token>
     {
         private readonly StringBuilder _token = new StringBuilder();
 

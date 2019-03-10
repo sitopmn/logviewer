@@ -68,5 +68,4 @@ namespace logviewer.query.Logs
             return log;
         }
     }
-    }
 }
