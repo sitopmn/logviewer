@@ -35,7 +35,7 @@ namespace logviewer.query.Logs
         }
 
         /// <summary>
-        /// Gets the next of the log format
+        /// Gets the name of the log format
         /// </summary>
         public string Name => "Plain Text";
 
