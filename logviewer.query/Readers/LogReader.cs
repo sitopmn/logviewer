@@ -57,6 +57,16 @@ namespace logviewer.query.Readers
         /// Index within <see cref="_undecoded"/> of the next byte to decode
         /// </summary>
         private int _currentIndex;
+
+        /// <summary>
+        /// Last character which was peeked
+        /// </summary>
+        private char _peekCharacter;
+
+        /// <summary>
+        /// Number of bytes consumed by the peeked character
+        /// </summary>
+        private int _peekLength;
         
         #endregion
 
@@ -178,6 +188,9 @@ namespace logviewer.query.Readers
                 _undecodedBytes = 0;
             }
 
+            _peekCharacter = '\0';
+            _peekLength = 0;
+
             Index = index;
             return _currentPosition;
         }
@@ -282,10 +295,16 @@ namespace logviewer.query.Readers
             {
                 return -1;
             }
-            
-            _decoder.Convert(_undecoded, _currentIndex, _undecodedBytes - _currentIndex, chars, 0, 1, false, out bytesUsed, out charsUsed, out completed);
 
-            return chars[0];
+            if (_peekLength == 0)
+            {
+                _decoder.Convert(_undecoded, _currentIndex, _undecodedBytes - _currentIndex, chars, 0, 1, false, out bytesUsed, out charsUsed, out completed);
+
+                _peekCharacter = chars[0];
+                _peekLength = bytesUsed;
+            }
+
+            return _peekCharacter;
         }
 
         /// <summary>
@@ -309,9 +328,20 @@ namespace logviewer.query.Readers
                 return -1;
             }
 
-            _decoder.Convert(_undecoded, _currentIndex, _undecodedBytes - _currentIndex, chars, 0, 1, false, out bytesUsed, out charsUsed, out completed);
-            _currentPosition += bytesUsed;
-            _currentIndex += bytesUsed;
+            if (_peekLength > 0)
+            {
+                _currentPosition += _peekLength;
+                _currentIndex += _peekLength;
+                chars[0] = _peekCharacter;
+                _peekLength = 0;
+                _peekCharacter = '\0';
+            }
+            else
+            {
+                _decoder.Convert(_undecoded, _currentIndex, _undecodedBytes - _currentIndex, chars, 0, 1, false, out bytesUsed, out charsUsed, out completed);
+                _currentPosition += bytesUsed;
+                _currentIndex += bytesUsed;
+            }
 
             return chars[0];
         }
