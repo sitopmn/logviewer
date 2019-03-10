@@ -29,7 +29,7 @@ namespace logviewer.query.Logs
 
         protected override LogReader<Token> CreateTokenReader(Stream stream, string file, string member)
         {
-            throw new NotImplementedException();
+            return new JsonTokenReader(stream, Encoding.Default, file, member);
         }
     }
 }
