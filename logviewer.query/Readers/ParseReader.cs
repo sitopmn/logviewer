@@ -26,6 +26,51 @@ namespace logviewer.query.Readers
         }
 
         /// <summary>
+        /// Reads a comment
+        /// </summary>
+        /// <returns>True if the comment was read</returns>
+        protected bool ReadComment()
+        {
+            if (ReadOne('/'))
+            {
+                if (ReadOne('/'))
+                {
+                    ReadUntil('\r', '\n');
+                    return true;
+                }
+                else if (ReadOne('*'))
+                {
+                    while (ReadUntil('*'))
+                    {
+                        if (ReadOne('/'))
+                        {
+                            return true;
+                        }
+                    }
+                }
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// Reads whitespace
+        /// </summary>
+        /// <returns>True if whitespace was read</returns>
+        protected bool ReadWhitespace()
+        {
+            if (char.IsWhiteSpace((char)PeekChar()))
+            {
+                ReadChar();
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
+
+        /// <summary>
         /// Reads a literal string
         /// </summary>
         /// <param name="sequence">String to read</param>

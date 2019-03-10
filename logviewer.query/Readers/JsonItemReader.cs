@@ -224,34 +224,6 @@ namespace logviewer.query.Readers
                 c = ReadChar();
             }
         }
-        
-        /// <summary>
-        /// Reads a comment
-        /// </summary>
-        /// <returns>True if the comment was read</returns>
-        private bool ReadComment()
-        {
-            if (ReadOne('/'))
-            {
-                if (ReadOne('/'))
-                {
-                    ReadUntil('\r', '\n');
-                    return true;
-                }
-                else if (ReadOne('*'))
-                {
-                    while (ReadUntil('*'))
-                    {
-                        if (ReadOne('/'))
-                        {
-                            return true;
-                        }
-                    }
-                }
-            }
-
-            return false;
-        }
 
         /// <summary>
         /// Reads a string delimited by quotes
@@ -368,24 +340,7 @@ namespace logviewer.query.Readers
 
             return builder.ToString();
         }
-
-        /// <summary>
-        /// Reads whitespace
-        /// </summary>
-        /// <returns>True if whitespace was read</returns>
-        private bool ReadWhitespace()
-        {
-            if (char.IsWhiteSpace((char)PeekChar()))
-            {
-                ReadChar();
-                return true;
-            }
-            else
-            {
-                return false;
-            }
-        }
-
+        
         /// <summary>
         /// Struct representing a document
         /// </summary>
