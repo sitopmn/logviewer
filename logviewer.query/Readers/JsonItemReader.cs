@@ -48,7 +48,7 @@ namespace logviewer.query.Readers
             var item = new LogItem(string.Empty, File, Member, obj.Position, 0);
             foreach (var f in obj.Fields)
             {
-                item.Fields.Add(f.Name, f.Value);
+                item.Fields[f.Name] = f.Value;
             }
 
             return item;
