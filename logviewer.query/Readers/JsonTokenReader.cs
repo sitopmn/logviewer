@@ -161,7 +161,8 @@ namespace logviewer.query.Readers
                         }
                         else if (c == '[')
                         {
-                            _state = State.Array;
+                            _hierarchy.Push(string.Empty);
+                            _state = State.Skip;
                         }
                         else if (c == '"')
                         {
@@ -339,6 +340,10 @@ namespace logviewer.query.Readers
                                 _state = State.Item;
                             }
                         }
+                        else if (c == '{' && _hierarchy.Count > 0)
+                        {
+                            _hierarchy.Push(string.Empty);
+                        }
                         else if (c == '/')
                         {
                             _stateHistory.Push(State.Skip);
@@ -403,21 +408,20 @@ namespace logviewer.query.Readers
         private enum State
         {
             Item,
-            Skip,
-            Comment,
             KeyStart,
-            CommentLine,
-            CommentBlock,
-            CommentBlockEnd,
             Key,
             KeyToken,
             KeyValueSeparator,
             ValueStart,
-            ValueEnd,
-            Array,
             String,
             StringEscape,
             Literal,
+            ValueEnd,
+            Skip,
+            Comment,
+            CommentLine,
+            CommentBlock,
+            CommentBlockEnd,
         }
     }
 }

@@ -168,7 +168,7 @@ namespace logviewer.test.Readers
         [TestMethod]
         public void DocumentReadCorrectlyAfterInvalidDocument()
         {
-            var objects = ReadTokens("{ \"key\" false } { \"key\" : 1234 }").ToArray();
+            var objects = ReadTokens("{ \"key\" { false } } { \"key\" : 1234 }").ToArray();
             CheckToken(objects, 0, ETokenType.Item, 0);
             CheckToken(objects, 1, ETokenType.Item, 16);
             CheckToken(objects, 2, ETokenType.Field, 0, "key");
