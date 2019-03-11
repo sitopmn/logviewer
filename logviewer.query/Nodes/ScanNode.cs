@@ -13,11 +13,6 @@ namespace logviewer.query.Nodes
     /// </summary>
     internal class ScanNode : MatchNode
     {
-        public IDictionary<string, Type> Fields => new Dictionary<string, Type>()
-        {
-            ["message"] = typeof(string)
-        };
-
         public override void Accept(IVisitor visitor) => visitor.Visit(this);
 
         public override Expression Predicate() => Expression.Constant(true);

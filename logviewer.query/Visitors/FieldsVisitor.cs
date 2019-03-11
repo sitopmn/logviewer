@@ -13,9 +13,14 @@ namespace logviewer.query.Visitors
     /// </summary>
     internal class FieldsVisitor : IVisitor
     {
-        public IDictionary<string, Type> Fields { get; private set; }
+        private readonly IReadOnlyCollection<string> _fields;
 
-        public bool GeneratesDynamicFields { get; private set; }
+        public IDictionary<string, Type> Fields { get; private set; }
+        
+        public FieldsVisitor(IReadOnlyCollection<string> fields)
+        {
+            _fields = fields;
+        }
 
         public void Visit(LimitNode node)
         {
@@ -44,13 +49,7 @@ namespace logviewer.query.Visitors
                 .Concat(node.AggregateNames.Select((n, i) => new KeyValuePair<string, Type>(n, node.AggregateTypes[i])))
                 .ToDictionary(k => k.Key, k => k.Value);
         }
-
-        public void Visit(ParseNode node)
-        {
-            Fields = new Dictionary<string, Type>();
-            GeneratesDynamicFields = true;
-        }
-
+        
         public void Visit(AndNode node)
         {
             var set = new HashSet<KeyValuePair<string, Type>>();
@@ -95,12 +94,19 @@ namespace logviewer.query.Visitors
 
         public void Visit(PhraseNode node)
         {
-            Fields = node.Fields;
+            if (node.Fields.Count == 0)
+            {
+                Fields = _fields.ToDictionary(f => f, f => typeof(string));
+            }
+            else
+            {
+                Fields = node.Fields;
+            }
         }
 
         public void Visit(ScanNode node)
         {
-            Fields = node.Fields;
+            Fields = _fields.ToDictionary(f => f, f => typeof(string));
         }
     }
 }

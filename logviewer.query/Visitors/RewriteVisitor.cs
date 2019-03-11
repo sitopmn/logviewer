@@ -42,12 +42,6 @@ namespace logviewer.query.Visitors
             Tree = new GroupByNode(Tree, node.GroupNames, node.GroupExpressions, node.AggregateNames, node.Aggregates);
         }
 
-        public void Visit(ParseNode node)
-        {
-            node.Inner[0].Accept(this);
-            Tree = new ParseNode(Tree, node.Parser, node.Field);
-        }
-
         public void Visit(AndNode node)
         {
             var nodes = new List<MatchNode>();

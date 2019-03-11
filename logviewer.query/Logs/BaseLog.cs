@@ -102,6 +102,11 @@ namespace logviewer.query
         public IReadOnlyCollection<string> Tokens => _index.Tokens;
 
         /// <summary>
+        /// Gets the list of fields
+        /// </summary>
+        public IReadOnlyCollection<string> Fields => _index.Fields;
+
+        /// <summary>
         /// Gets a value indicating the log is updating
         /// </summary>
         public bool IsUpdating

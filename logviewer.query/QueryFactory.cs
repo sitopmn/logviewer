@@ -182,15 +182,6 @@ namespace logviewer.query
 
         #endregion
         
-        #region parsing
-
-        private static readonly Parser<Tuple<string, IParser>> ParseParser =
-            from parser in Parse.Identifier(Parse.Letter, Parse.LetterOrDigit)
-            from field in Parse.Char('(').Then(_ => FieldName).Then(column => Parse.Char(')').Select(_ => column)).XOptional()
-            select new Tuple<string, IParser>(field.GetOrElse("message"), CreateParser(parser));
-
-        #endregion
-
         #region grouping
 
         private static readonly Parser<Tuple<string, Expression>> GroupParser =
@@ -228,14 +219,13 @@ namespace logviewer.query
         #endregion
 
         private static readonly Parser<Node> QueryParser = (
-            from match in Search.Select(m => { var v = new FieldsVisitor(); m.Accept(v); _fieldTypes = v.Fields; return m; })
-            from parser in Parse.String("parse").Token().Then(_ => ParseParser.Token()).XOptional().Select(p => { _dynamicFields = true; return p; })
+            from match in Search.Select(m => { var v = new FieldsVisitor(new List<string>()); m.Accept(v); _fieldTypes = v.Fields; return m; })
             from filter in Parse.String("where").Token().Then(_ => ExpressionParser).XOptional()
             from grouping in Parse.String("group").Token().Concat(Parse.String("by").Token()).Then(_ => GroupParser.DelimitedBy(Parse.Char(',').Token())).XOptional()
             from selects in Parse.String("select").Token().Then(_ => AggregateParser.DelimitedBy(Parse.Char(',').Token())).XOptional()
             from order in Parse.String("order").Token().Concat(Parse.String("by").Token()).Then(_ => OrderColumnParser.DelimitedBy(Parse.Char(',').Token())).XOptional()
             from limit in Parse.String("limit").Token().Then(_ => Constant.Select(c => (int)c)).XOptional()
-            select CreateQueryTree(match, parser, filter, grouping, selects, order, limit)).End();
+            select CreateQueryTree(match, filter, grouping, selects, order, limit)).End();
 
         #endregion
 
@@ -321,7 +311,6 @@ namespace logviewer.query
         /// <returns>A query tree for executing the query</returns>
         private static Node CreateQueryTree(
             MatchNode match,
-            IOption<Tuple<string, IParser>> parser,
             IOption<Expression> filter,
             IOption<IEnumerable<Tuple<string, Expression>>> grouping,
             IOption<IEnumerable<Tuple<string, IAggregate>>> selects,
@@ -329,12 +318,7 @@ namespace logviewer.query
             IOption<int> limit)
         {
             Node query = match;
-
-            if (!parser.IsEmpty)
-            {
-                query = new ParseNode(query, parser.Get().Item2, parser.Get().Item1);
-            }
-
+            
             if (!filter.IsEmpty)
             {
                 query = new PredicateNode(query, filter.Get());

@@ -22,7 +22,6 @@ namespace logviewer.query.Visitors
         public void Visit(ProjectNode node) => Format(node, $"{string.Join(",", node.Names)}");
         public void Visit(AggregateNode node) => Format(node, $"{string.Join(",", node.Names)}");
         public void Visit(GroupByNode node) => Format(node, $"{string.Join(",", node.GroupNames)}|{string.Join(",", node.AggregateNames)}");
-        public void Visit(ParseNode node) => Format(node, $"Parser = {node.Parser.GetType().Name}");
         public void Visit(AndNode node) => Format(node);
         public void Visit(OrNode node) => Format(node);
         public void Visit(NotNode node) => Format(node);

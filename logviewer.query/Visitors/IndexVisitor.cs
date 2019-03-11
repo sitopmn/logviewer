@@ -58,13 +58,7 @@ namespace logviewer.query.Visitors
             node.Inner[0].Accept(this);
             Mode = Query.EvaluationMode.Aggregate;
         }
-
-        public void Visit(ParseNode node)
-        {
-            node.Inner[0].Accept(this);
-            Mode = Query.EvaluationMode.Evaluate;
-        }
-
+        
         public void Visit(AndNode node)
         {
             var mode = Query.EvaluationMode.Index;

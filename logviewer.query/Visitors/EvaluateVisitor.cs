@@ -204,26 +204,6 @@ namespace logviewer.query.Visitors
             Items = Items.Where(predicate);
         }
 
-        public void Visit(ParseNode node)
-        {
-            node.Inner[0].Accept(this);
-            Items = Items.Select(i =>
-            {
-                if (node.Parse(i))
-                {
-                    lock (Fields)
-                    {
-                        foreach (var field in i.Fields.Where(f => !Fields.ContainsKey(f.Key)))
-                        {
-                            Fields[field.Key] = field.Value.GetType();
-                        }
-                    }
-                }
-
-                return i;
-            });
-        }
-
         public void Visit(MatchNode node)
         {
             var predicate = Expression.Lambda<Func<LogItem, bool>>(node.Predicate(), QueryFactory.ItemVariable).Compile();

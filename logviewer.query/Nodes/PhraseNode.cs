@@ -29,7 +29,6 @@ namespace logviewer.query.Nodes
         public PhraseNode(string pattern, bool exact, string markerField, string markerValue)
         {
             _phrase = pattern;
-            _fields["message"] = typeof(string);
             _dateTimeFormat = QueryFactory.DateTimeFormat;
 
             // generate a pattern for matching fields

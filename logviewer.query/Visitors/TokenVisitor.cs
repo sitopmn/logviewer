@@ -21,7 +21,6 @@ namespace logviewer.query.Visitors
         public void Visit(ProjectNode node) => VisitInternal(node);
         public void Visit(AggregateNode node) => VisitInternal(node);
         public void Visit(GroupByNode node) => VisitInternal(node);
-        public void Visit(ParseNode node) => VisitInternal(node);
         public void Visit(AndNode node) => VisitInternal(node);
         public void Visit(OrNode node) => VisitInternal(node);
         public void Visit(NotNode node) => VisitInternal(node);

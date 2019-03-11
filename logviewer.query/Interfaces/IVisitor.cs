@@ -17,7 +17,6 @@ namespace logviewer.query.Interfaces
         void Visit(ProjectNode node);
         void Visit(AggregateNode node);
         void Visit(GroupByNode node);
-        void Visit(ParseNode node);
         void Visit(AndNode node);
         void Visit(OrNode node);
         void Visit(NotNode node);
