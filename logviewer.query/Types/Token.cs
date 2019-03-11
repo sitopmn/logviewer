@@ -58,8 +58,13 @@ namespace logviewer.query
         Item = 1,
 
         /// <summary>
+        /// Marks a field with the given data as a name
+        /// </summary>
+        Field = 2,
+
+        /// <summary>
         /// Marks a token consisting of character data
         /// </summary>
-        Characters = 2,
+        Characters = 3,
     }    
 }

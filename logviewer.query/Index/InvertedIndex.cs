@@ -42,6 +42,11 @@ namespace logviewer.query.Index
         private readonly List<IndexFile> _lines = new List<IndexFile>();
 
         /// <summary>
+        /// HashSet of field names found in the indexed data
+        /// </summary>
+        private readonly HashSet<string> _fields = new HashSet<string>();
+
+        /// <summary>
         /// Lock object for modifying the index
         /// </summary>
         private readonly object _locker = new object();
@@ -56,6 +61,11 @@ namespace logviewer.query.Index
         public IReadOnlyCollection<string> Tokens => _tokens.Keys;
 
         /// <summary>
+        /// Gets fields of the log
+        /// </summary>
+        public IReadOnlyCollection<string> Fields => _fields;
+
+        /// <summary>
         /// Gets the list of files in the index
         /// </summary>
         public IReadOnlyCollection<Tuple<string, string, DateTime, long>> Files => _lines
@@ -68,7 +78,7 @@ namespace logviewer.query.Index
         /// Number of indexed items
         /// </summary>
         public int Count => _lines.Sum(f => f.Positions.Count);
-
+        
         #endregion
 
         #region ILogIndexer implementation
@@ -136,7 +146,8 @@ namespace logviewer.query.Index
             // create the indexer state
             var linePositions = new List<uint>();
             var tokens = new Dictionary<string, List<uint>>();
-            return new Tuple<List<uint>, Dictionary<string, List<uint>>, string, string, long, DateTime>(linePositions, tokens, file, member, length, timestamp);
+            var fields = new HashSet<string>();
+            return new Tuple<List<uint>, Dictionary<string, List<uint>>, string, string, long, DateTime, HashSet<string>>(linePositions, tokens, file, member, length, timestamp, fields);
         }
 
         /// <summary>
@@ -147,8 +158,9 @@ namespace logviewer.query.Index
         /// <param name="count">Number of tokens to process</param>
         public void Update(object state, Token[] token, int count)
         {
-            var linePositions = ((Tuple<List<uint>, Dictionary<string, List<uint>>, string, string, long, DateTime>)state).Item1;
-            var tokens = ((Tuple<List<uint>, Dictionary<string, List<uint>>, string, string, long, DateTime>)state).Item2;
+            var linePositions = ((Tuple<List<uint>, Dictionary<string, List<uint>>, string, string, long, DateTime, HashSet<string>>)state).Item1;
+            var tokens = ((Tuple<List<uint>, Dictionary<string, List<uint>>, string, string, long, DateTime, HashSet<string>>)state).Item2;
+            var fields = ((Tuple<List<uint>, Dictionary<string, List<uint>>, string, string, long, DateTime, HashSet<string>>)state).Item7;
 
             for (var i = 0; i < count; i++)
             {
@@ -167,6 +179,10 @@ namespace logviewer.query.Index
 
                     item.Add((uint)token[i].Position);
                 }
+                else if (token[i].Type == ETokenType.Field && !fields.Contains(token[i].Data))
+                {
+                    fields.Add(token[i].Data);
+                }
             }
         }
 
@@ -176,12 +192,13 @@ namespace logviewer.query.Index
         /// <param name="state">State of the indexer</param>
         public void Complete(object state)
         {
-            var linePositions = ((Tuple<List<uint>, Dictionary<string, List<uint>>, string, string, long, DateTime>)state).Item1;
-            var tokens = ((Tuple<List<uint>, Dictionary<string, List<uint>>, string, string, long, DateTime>)state).Item2;
-            var file = ((Tuple<List<uint>, Dictionary<string, List<uint>>, string, string, long, DateTime>)state).Item3;
-            var member = ((Tuple<List<uint>, Dictionary<string, List<uint>>, string, string, long, DateTime>)state).Item4;
-            var length = ((Tuple<List<uint>, Dictionary<string, List<uint>>, string, string, long, DateTime>)state).Item5;
-            var timestamp = ((Tuple<List<uint>, Dictionary<string, List<uint>>, string, string, long, DateTime>)state).Item6;
+            var linePositions = ((Tuple<List<uint>, Dictionary<string, List<uint>>, string, string, long, DateTime, HashSet<string>>)state).Item1;
+            var tokens = ((Tuple<List<uint>, Dictionary<string, List<uint>>, string, string, long, DateTime, HashSet<string>>)state).Item2;
+            var file = ((Tuple<List<uint>, Dictionary<string, List<uint>>, string, string, long, DateTime, HashSet<string>>)state).Item3;
+            var member = ((Tuple<List<uint>, Dictionary<string, List<uint>>, string, string, long, DateTime, HashSet<string>>)state).Item4;
+            var length = ((Tuple<List<uint>, Dictionary<string, List<uint>>, string, string, long, DateTime, HashSet<string>>)state).Item5;
+            var timestamp = ((Tuple<List<uint>, Dictionary<string, List<uint>>, string, string, long, DateTime, HashSet<string>>)state).Item6;
+            var fields = ((Tuple<List<uint>, Dictionary<string, List<uint>>, string, string, long, DateTime, HashSet<string>>)state).Item7;
 
             lock (_locker)
             {
@@ -228,6 +245,15 @@ namespace logviewer.query.Index
                         list[fileIndex].Timestamp = timestamp;
                     }
                 }
+
+                // add the fields to the index
+                foreach (var field in fields)
+                {
+                    if (!_fields.Contains(field))
+                    {
+                        _fields.Add(field);
+                    }
+                }
             }
         }
 
@@ -236,6 +262,11 @@ namespace logviewer.query.Index
         /// </summary>
         public void Complete()
         {
+            // generate a message field if no fields were indexed
+            if (_fields.Count == 0)
+            {
+                _fields.Add("message");
+            }
         }
         
         #endregion
