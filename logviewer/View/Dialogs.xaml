@@ -9,6 +9,60 @@
                     xmlns:util="clr-namespace:logviewer.core;assembly=logviewer.core"
                     xmlns:vm="clr-namespace:logviewer.ViewModel">
 
+    <DataTemplate DataType="{x:Type vm:DialogOpenViewModel}">
+        <c:DialogLayout>
+            <c:DialogLayout.HeaderContent>
+                <TextBlock Style="{StaticResource MaterialDesignTitleTextBlock}"
+                           Text="{x:Static properties:Resources.Dialogs_EditPanel}" />
+            </c:DialogLayout.HeaderContent>
+            <c:DialogLayout.DialogContent>
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+                    <TextBlock Grid.Row="0"
+                               Margin="0 0 0 8"
+                               Style="{StaticResource MaterialDesignCaptionTextBlock}"
+                               Text="Log(s) to open" />
+                    <ListBox Grid.Row="1"
+                             ItemsSource="{Binding Sources}" />
+                    <ComboBox Grid.Row="2"
+                              material:HintAssist.Hint="Select log file format"
+                              material:HintAssist.IsFloating="True"
+                              ItemsSource="{Binding Formats}"
+                              SelectedItem="{Binding SelectedFormat}" />
+                </Grid>
+            </c:DialogLayout.DialogContent>
+            <c:DialogLayout.ActionContent>
+                <StackPanel HorizontalAlignment="Right"
+                            Orientation="Horizontal">
+                    <Button MinWidth="64"
+                            Margin="0 0 0 0"
+                            Command="{x:Static material:DialogHost.CloseDialogCommand}"
+                            Content="{x:Static properties:Resources.Dialogs_CancelButton}"
+                            IsCancel="True"
+                            Style="{StaticResource MaterialDesignFlatButton}">
+                        <Button.CommandParameter>
+                            <system:Boolean>False</system:Boolean>
+                        </Button.CommandParameter>
+                    </Button>
+                    <Button MinWidth="64"
+                            Margin="8 0 0 0"
+                            Command="{x:Static material:DialogHost.CloseDialogCommand}"
+                            Content="{x:Static properties:Resources.Dialogs_OpenButton}"
+                            IsDefault="True"
+                            Style="{StaticResource MaterialDesignFlatButton}">
+                        <Button.CommandParameter>
+                            <system:Boolean>True</system:Boolean>
+                        </Button.CommandParameter>
+                    </Button>
+                </StackPanel>
+            </c:DialogLayout.ActionContent>
+        </c:DialogLayout>
+    </DataTemplate>
+
     <DataTemplate DataType="{x:Type vm:DialogDeleteViewModel}">
         <c:DialogLayout>
             <c:DialogLayout.HeaderContent>

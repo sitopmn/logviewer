@@ -409,25 +409,30 @@ namespace logviewer.ViewModel
                 source = dlg.FileNames;
             }
 
-            // index the log
-            try
+            // show the open dialog
+            var viewmodel = new DialogOpenViewModel(_logService.Formats, source);
+            if ((bool)await DialogHost.Show(viewmodel))
             {
-                await Task.Run(() => _logService.Load(source, p => Invoke(p2 => ProgressHandler(this, new ProgressEventArgs(p2)), p), CancellationToken.None));
-            }
-            catch (Exception ex)
-            {
-                MessageQueue.Enqueue(ex.Message);
-                _logger.Error($"An error occurred while loading: {ex.Message}");
-            }
-            
-            // reset the progress information
-            RaisePropertyChanged(nameof(IsLogOpened));
-            ProgressHandler(this, ProgressEventArgs.End);
+                // index the log
+                try
+                {
+                    await Task.Run(() => _logService.Load(source, viewmodel.SelectedFormat, p => Invoke(p2 => ProgressHandler(this, new ProgressEventArgs(p2)), p), CancellationToken.None));
+                }
+                catch (Exception ex)
+                {
+                    MessageQueue.Enqueue(ex.Message);
+                    _logger.Error($"An error occurred while loading: {ex.Message}");
+                }
 
-            // update the current view
-            if (CurrentTab is IPageViewModel page)
-            {
-                await page.Update();
+                // reset the progress information
+                RaisePropertyChanged(nameof(IsLogOpened));
+                ProgressHandler(this, ProgressEventArgs.End);
+
+                // update the current view
+                if (CurrentTab is IPageViewModel page)
+                {
+                    await page.Update();
+                }
             }
         }
 

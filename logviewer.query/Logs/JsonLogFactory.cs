@@ -34,7 +34,7 @@ namespace logviewer.query.Logs
         /// <summary>
         /// Gets the name of the log format
         /// </summary>
-        public string Name => "JSON Formatted Text";
+        public string Name => "JSON Text";
 
         /// <summary>
         /// Checks whether the given source can be opened by the log

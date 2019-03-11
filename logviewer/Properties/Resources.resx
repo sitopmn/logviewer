@@ -168,6 +168,9 @@
   <data name="Dialogs_ManageBookmarks" xml:space="preserve">
     <value>Manage Bookmarks</value>
   </data>
+  <data name="Dialogs_OpenButton" xml:space="preserve">
+    <value>OPEN</value>
+  </data>
   <data name="Dialogs_OverwriteMessage" xml:space="preserve">
     <value>A query with the given name is already existing and will be overwritten</value>
   </data>

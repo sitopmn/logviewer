@@ -214,6 +214,15 @@ namespace logviewer.Properties {
         }
         
         /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die OPEN ähnelt.
+        /// </summary>
+        public static string Dialogs_OpenButton {
+            get {
+                return ResourceManager.GetString("Dialogs_OpenButton", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Sucht eine lokalisierte Zeichenfolge, die A query with the given name is already existing and will be overwritten ähnelt.
         /// </summary>
         public static string Dialogs_OverwriteMessage {

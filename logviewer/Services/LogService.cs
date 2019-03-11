@@ -49,23 +49,6 @@ namespace logviewer.Services
         /// Fires when a log was loaded
         /// </summary>
         public event EventHandler Loaded;
-
-        /// <summary>
-        /// Loads a log from the given source. The format is auto-detected
-        /// </summary>
-        /// <param name="source">Source to load the log from</param>
-        /// <param name="progress">Action to report progress while loading the log</param>
-        /// <param name="cancellation">Token for cancelling the operation</param>
-        public void Load(string[] source, Action<double> progress, CancellationToken cancellation)
-        {
-            var format = DetectLogFormat(source);
-            if (string.IsNullOrEmpty(format))
-            {
-                throw new NotSupportedException("The log format could not be detected automatically");
-            }
-
-            Load(source, format, progress, cancellation);
-        }
         
         /// <summary>
         /// Loads a log from the given source with the given format
@@ -88,24 +71,6 @@ namespace logviewer.Services
 
             // fire the loaded event
             Loaded?.Invoke(this, EventArgs.Empty);
-        }
-
-        /// <summary>
-        /// Tries to detect the log format
-        /// </summary>
-        /// <param name="source">Source of the log which format should be detected</param>
-        /// <returns>Name of the format or <see cref="string.Empty"/> if it couldn't be detected</returns>
-        private string DetectLogFormat(string[] source)
-        {
-            var factory = _factories.FirstOrDefault(f => f.IsSupported(source));
-            if (factory != null)
-            {
-                return factory.Name;
-            }
-            else
-            {
-                return string.Empty;
-            }
         }
     }
 }
