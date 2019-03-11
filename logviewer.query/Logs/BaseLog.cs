@@ -467,7 +467,19 @@ namespace logviewer.query
                     }
 
                     // read data
-                    yield return (LogItem)reader.Read();
+                    LogItem item;
+                    try
+                    {
+                        item = (LogItem)reader.Read();
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.Error($"Log::Read(): Error while reading from {indexEnumerator.Current.File}::{indexEnumerator.Current.Member}: {ex.Message}");
+                        break;
+                    }
+
+                    // return the data to the caller
+                    yield return item;
                     linesRead += 1;
 
                     // check for cancellation and report progress
