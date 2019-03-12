@@ -11,8 +11,38 @@ namespace logviewer.query.Readers
     /// <summary>
     /// Implementation of a reader parsing a reduced subset of JSON (arrays are intentionally not supported as they are difficult to represent here)
     /// </summary>
-    internal class JsonItemReader : LogReader<ILogItem>
+    internal class JsonItemReader : JsonReader<ILogItem>
     {
+        /// <summary>
+        /// Builder for the message string
+        /// </summary>
+        private readonly StringBuilder _message = new StringBuilder();
+
+        /// <summary>
+        /// Builder for field values
+        /// </summary>
+        private readonly StringBuilder _value = new StringBuilder();
+
+        /// <summary>
+        /// Builder for property names
+        /// </summary>
+        private readonly StringBuilder _property = new StringBuilder();
+
+        /// <summary>
+        /// List of parent property names in the object hierarchy of the current document
+        /// </summary>
+        private readonly List<string> _hierarchy = new List<string>();
+
+        /// <summary>
+        /// Dictionary with field values
+        /// </summary>
+        private readonly Dictionary<string, string> _fields = new Dictionary<string, string>();
+
+        /// <summary>
+        /// Position of the item
+        /// </summary>
+        private long _position;
+        
         /// <summary>
         /// Initializes a new instance of the <see cref="JsonReader{T}"/> class
         /// </summary>
@@ -25,484 +55,163 @@ namespace logviewer.query.Readers
         {
         }
 
+        #region read documents
+
         /// <summary>
-        /// Reads a single log item
+        /// The reader encountered a new document
         /// </summary>
-        /// <returns>A log item</returns>
-        public override ILogItem Read()
+        /// <param name="buffer">Buffer for storing tokens</param>
+        /// <param name="offset">Offset of the next token to store into the buffer</param>
+        /// <param name="position">Position within the source file</param>
+        /// <returns>Offset to store the next token into the buffer</returns>
+        protected override int OnDocumentStart(ILogItem[] buffer, int offset, long position)
         {
-            // read whitespace or comments
-            while (ReadWhitespace() || ReadComment()) ;
+            _message.Clear();
+            _fields.Clear();
+            _hierarchy.Clear();
+            _property.Clear();
+            _value.Clear();
+            _position = position;
+            return offset;
+        }
 
-            // read a separator character
-            ReadOne(',', '\x1E');
+        /// <summary>
+        /// The reader read a character within a document
+        /// </summary>
+        /// <param name="buffer">Buffer for storing tokens</param>
+        /// <param name="offset">Offset of the next token to store into the buffer</param>
+        /// <param name="position">Position within the source file</param>
+        /// <param name="c">The current character</param>
+        /// <returns>Offset to store the next token into the buffer</returns>
+        protected override int OnDocumentCharacter(ILogItem[] buffer, int offset, long position, char c)
+        {
+            _message.Append(c);
+            return offset;
+        }
 
-            // read the document value
-            var obj = ReadObject();
-            if (obj.Position < 0)
+        /// <summary>
+        /// The reader completed a document
+        /// </summary>
+        /// <param name="buffer">Buffer for storing tokens</param>
+        /// <param name="offset">Offset of the next token to store into the buffer</param>
+        /// <returns>Offset to store the next token into the buffer</returns>
+        protected override int OnDocumentEnd(ILogItem[] buffer, int offset)
+        {
+            var item = new LogItem(_message.ToString(), File, Member, _position, 0);
+
+            foreach (var f in _fields)
             {
-                return null;
+                item.Fields[f.Key] = f.Value;
             }
 
-            // create a log item for the document
-            var item = new LogItem(string.Empty, File, Member, obj.Position, 0);
-            foreach (var f in obj.Fields)
-            {
-                item.Fields[f.Name] = f.Value;
-            }
+            buffer[offset++] = item;
+            return offset;
+        }
 
-            return item;
+        #endregion
+
+        #region read property names
+
+        /// <summary>
+        /// The reader encountered a property name
+        /// </summary>
+        /// <param name="buffer">Buffer for storing tokens</param>
+        /// <param name="offset">Offset of the next token to store into the buffer</param>
+        /// <returns>Offset to store the next token into the buffer</returns>
+        protected override int OnPropertyStart(ILogItem[] buffer, int offset)
+        {
+            _property.Clear();
+            return offset;
+        }
+
+        /// <summary>
+        /// The reader encountered a property name character
+        /// </summary>
+        /// <param name="buffer">Buffer for storing tokens</param>
+        /// <param name="offset">Offset of the next token to store into the buffer</param>
+        /// <param name="c">The current character</param>
+        /// <returns>Offset to store the next token into the buffer</returns>
+        protected override int OnPropertyCharacter(ILogItem[] buffer, int offset, char c)
+        {
+            _property.Append(c);
+            return offset;
         }
         
         /// <summary>
-        /// Reads a single json object
+        /// The reader encountered an object value
         /// </summary>
-        /// <returns>A <see cref="Document"/> containing the document data</returns>
-        private Document ReadObject()
+        /// <param name="buffer">Buffer for storing tokens</param>
+        /// <param name="offset">Offset of the next token to store into the buffer</param>
+        /// <returns>Offset to store the next token into the buffer</returns>
+        protected override int OnObjectStart(ILogItem[] buffer, int offset)
         {
-            var doc = new Document();
-            doc.Fields = new List<Field>();
-
-            // read whitespace or comments
-            while (ReadWhitespace() || ReadComment()) ;
-            
-            // store the starting position of the document
-            doc.Position = Position;
-            
-            // read the opening bracket
-            if (!ReadOne('{'))
-            {
-                return Document.Empty;
-            }
-
-            // read the key-value pairs
-            while (true)
-            {
-                // read whitespace or comments
-                while (ReadWhitespace() || ReadComment()) ;
-                
-                // read the property name
-                var key = ReadString();
-                if (key == null)
-                {
-                    break;
-                }
-
-                // read whitespace or comments
-                while (ReadWhitespace() || ReadComment()) ;
-
-                // read the separator
-                if (!ReadOne(':'))
-                {
-                    break;
-                }
-
-                // read whitespace or comments
-                while (ReadWhitespace() || ReadComment()) ;
-
-                // read the property value
-                var value = ReadValue();
-                if (value is string strv)
-                {
-                    doc.Fields.Add(new Field() { Name = key, Value = strv, Type = 1 });
-                }
-                else if (value is Document docv)
-                {
-                    foreach (var f in docv.Fields)
-                    {
-                        doc.Fields.Add(new Field() { Name = $"{key}.{f.Name}", Value = f.Value, Type = f.Type });
-                    }
-                }
-                else
-                {
-                    break;
-                }
-                
-                // read whitespace or comments
-                while (ReadWhitespace() || ReadComment()) ;
-
-                // read the list delimiter
-                if (!ReadOne(','))
-                {
-                    break;
-                }
-            }
-
-            // read whitespace or comments
-            while (ReadWhitespace() || ReadComment()) ;
-
-            // read the closing bracket
-            if (!ReadOne('}'))
-            {
-                // the closing bracket was not found, try to read until we find it to skip to the end of the object
-                if (!ReadUntil('}'))
-                {
-                    return Document.Empty;
-                }
-            }
-            
-            return doc;
+            _hierarchy.Add(_property.ToString());
+            return offset;
         }
 
         /// <summary>
-        /// Reads a value
+        /// The reader encountered the end of an object value
         /// </summary>
-        /// <returns>The value or null</returns>
-        private object ReadValue()
+        /// <param name="buffer">Buffer for storing tokens</param>
+        /// <param name="offset">Offset of the next token to store into the buffer</param>
+        /// <returns>Offset to store the next token into the buffer</returns>
+        protected override int OnObjectEnd(ILogItem[] buffer, int offset)
         {
-            object result;
-            
-            if ((result = ReadString()) != null)
-            {
-                return result;
-            }
+            _hierarchy.RemoveAt(_hierarchy.Count - 1);
+            return offset;
+        }
 
-            if ((result = ReadNumber()) != null)
-            {
-                return result;
-            }
+        #endregion
 
-            if (ReadArray())
-            {
-                return "[...]";
-            }
-
-            var doc = ReadObject();
-            if (doc.Position >= 0)
-            {
-                return doc;
-            }
-
-            if (ReadLiteral("true"))
-            {
-                return "true";
-            }
-
-            if (ReadLiteral("false"))
-            {
-                return "false";
-            }
-
-            if (ReadLiteral("null"))
-            {
-                return "null";
-            }
-
-            return null;
+        #region read property values
+        
+        /// <summary>
+        /// The reader encountered a string value
+        /// </summary>
+        /// <param name="buffer">Buffer for storing tokens</param>
+        /// <param name="offset">Offset of the next token to store into the buffer</param>
+        /// <returns>Offset to store the next token into the buffer</returns>
+        protected override int OnValueStart(ILogItem[] buffer, int offset)
+        {
+            _value.Clear();
+            return offset;
         }
 
         /// <summary>
-        /// Reads an array
+        /// The reader encountered a literal character
         /// </summary>
-        /// <returns>True if the array was read correctly</returns>
-        private bool ReadArray()
+        /// <param name="buffer">Buffer for storing tokens</param>
+        /// <param name="offset">Offset of the next token to store into the buffer</param>
+        /// <param name="c">The current character</param>
+        /// <returns>Offset to store the next token into the buffer</returns>
+        protected override int OnValueCharacter(ILogItem[] buffer, int offset, char c)
         {
-            var c = PeekChar();
-            if (c != '[')
-            {
-                return false;
-            }
-
-            ReadChar();
-            c = PeekChar();
-            var level = 1;
-            while (true)
-            {
-                if (c < 0)
-                {
-                    return false;
-                }
-                else if (c == ']')
-                {
-                    level -= 1;
-                    if (level == 0)
-                    {
-                        return true;
-                    }
-                }
-                else if (c == '[')
-                {
-                    level += 1;
-                }
-
-                c = ReadChar();
-            }
+            _value.Append(c);
+            return offset;
         }
 
         /// <summary>
-        /// Reads a string delimited by quotes
+        /// The reader encountered a string character
         /// </summary>
-        /// <returns>The string value or null</returns>
-        private string ReadString()
+        /// <param name="buffer">Buffer for storing tokens</param>
+        /// <param name="offset">Offset of the next token to store into the buffer</param>
+        /// <param name="c">The current character</param>
+        /// <returns>Offset to store the next token into the buffer</returns>
+        protected override int OnValueEnd(ILogItem[] buffer, int offset)
         {
-            var builder = new StringBuilder();
-
-            // check the opening quote
-            var c = PeekChar();
-            if (c != '"')
-            {
-                return null;
-            }
-
-            // read the opening quote
-            ReadChar();
-
-            // read the string characters up to the closing quote
-            c = ReadChar();
-            while (c != '"')
-            {
-                if (c == '\\')
-                {
-                    builder.Append((char)ReadChar());
-                }
-                else
-                {
-                    builder.Append((char)c);
-                }
-
-                c = ReadChar();
-            }
-
-            return builder.ToString();
+            _fields[CreateFieldName()] = _value.ToString();
+            return offset;
         }
 
-        /// <summary>
-        /// Reads a number
-        /// </summary>
-        /// <returns>The number as string or null</returns>
-        private string ReadNumber()
-        {
-            var builder = new StringBuilder();
-
-            // read the leading minus sign
-            var c = PeekChar();
-            if (c == '-')
-            {
-                builder.Append((char)c);
-                ReadChar();
-                c = PeekChar();
-            }
-
-            // read the integer part
-            if (!char.IsDigit((char)c))
-            {
-                return null;
-            }
-            while (char.IsDigit((char)c))
-            {
-                builder.Append((char)c);
-                ReadChar();
-                c = PeekChar();
-            }
-
-            // decimal point
-            if (c == '.')
-            {
-                builder.Append((char)c);
-                ReadChar();
-                c = PeekChar();
-
-                // read the fractional part
-                if (!char.IsDigit((char)c))
-                {
-                    return null;
-                }
-                while (char.IsDigit((char)c))
-                {
-                    builder.Append((char)c);
-                    ReadChar();
-                    c = PeekChar();
-                }
-            }
-
-            // read the exponential part
-            if (c == 'e' || c == 'E')
-            {
-                builder.Append((char)c);
-                ReadChar();
-                c = PeekChar();
-
-                if (c == '+' || c == '-')
-                {
-                    builder.Append((char)c);
-                    ReadChar();
-                    c = PeekChar();
-                }
-
-                // read the exponential part
-                if (!char.IsDigit((char)c))
-                {
-                    return null;
-                }
-                while (char.IsDigit((char)c))
-                {
-                    builder.Append((char)c);
-                    ReadChar();
-                    c = PeekChar();
-                }
-            }
-
-            return builder.ToString();
-        }
+        #endregion
 
         /// <summary>
-        /// Reads a comment
+        /// Creates a name for the current field
         /// </summary>
-        /// <returns>True if the comment was read</returns>
-        protected bool ReadComment()
+        /// <returns>Name of the field</returns>
+        private string CreateFieldName()
         {
-            if (ReadOne('/'))
-            {
-                if (ReadOne('/'))
-                {
-                    ReadUntil('\r', '\n');
-                    return true;
-                }
-                else if (ReadOne('*'))
-                {
-                    while (ReadUntil('*'))
-                    {
-                        if (ReadOne('/'))
-                        {
-                            return true;
-                        }
-                    }
-                }
-            }
-
-            return false;
-        }
-
-        /// <summary>
-        /// Reads whitespace
-        /// </summary>
-        /// <returns>True if whitespace was read</returns>
-        protected bool ReadWhitespace()
-        {
-            if (char.IsWhiteSpace((char)PeekChar()))
-            {
-                ReadChar();
-                return true;
-            }
-            else
-            {
-                return false;
-            }
-        }
-
-        /// <summary>
-        /// Reads a literal string
-        /// </summary>
-        /// <param name="sequence">String to read</param>
-        /// <returns>True if the string was read</returns>
-        protected bool ReadLiteral(string sequence)
-        {
-            if (PeekChar() != sequence[0])
-            {
-                return false;
-            }
-
-            foreach (var c in sequence)
-            {
-                if (ReadChar() != c)
-                {
-                    return false;
-                }
-            }
-
-            return true;
-        }
-
-        /// <summary>
-        /// Reads one of multiple characters
-        /// </summary>
-        /// <param name="chars">Array with alternative characters</param>
-        /// <returns>True if one of the given characters was read</returns>
-        protected bool ReadOne(params char[] chars)
-        {
-            var c = PeekChar();
-            if (chars.Contains((char)c))
-            {
-                ReadChar();
-                return true;
-            }
-            else
-            {
-                return false;
-            }
-        }
-
-        /// <summary>
-        /// Reads until one of the given characters is encountered
-        /// </summary>
-        /// <param name="delim">Charaters to delimit</param>
-        /// <returns>True if one of the given characters was encountered</returns>
-        protected bool ReadUntil(params char[] delim)
-        {
-            while (true)
-            {
-                var c = PeekChar();
-                if (c < 0)
-                {
-                    return false;
-                }
-                else if (delim.Contains((char)c))
-                {
-                    ReadChar();
-                    return true;
-                }
-                else
-                {
-                    ReadChar();
-                }
-            }
-        }
-
-        /// <summary>
-        /// Struct representing a document
-        /// </summary>
-        protected struct Document
-        {
-            /// <summary>
-            /// Empty document
-            /// </summary>
-            public static readonly Document Empty = new Document() { Position = -1 };
-
-            /// <summary>
-            /// Starting position of the document within the source
-            /// </summary>
-            public long Position;
-
-            /// <summary>
-            /// List of fields within the document
-            /// </summary>
-            public List<Field> Fields;
-        }
-
-        /// <summary>
-        /// Struct representing a field within a document
-        /// </summary>
-        protected struct Field
-        {
-            /// <summary>
-            /// Empty field
-            /// </summary>
-            public static readonly Field Empty = new Field() { Type = 0 };
-
-            /// <summary>
-            /// Name of the field
-            /// </summary>
-            public string Name;
-
-            /// <summary>
-            /// Value of the field
-            /// </summary>
-            public string Value;
-
-            /// <summary>
-            /// Data type of the value
-            /// </summary>
-            public int Type;
+            return string.Join(".", _hierarchy.Concat(new[] { _property.ToString() }));
         }
     }
 }

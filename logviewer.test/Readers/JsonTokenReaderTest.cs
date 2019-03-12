@@ -18,8 +18,9 @@ namespace logviewer.test.Readers
         {
             var objects = ReadTokens("{ \"key\":\"value\" }").ToArray();
             CheckToken(objects, 0, ETokenType.Item, 0);
-            CheckToken(objects, 1, ETokenType.Field, 0, "key");
-            CheckToken(objects, 2, ETokenType.Characters, 9, "value");
+            CheckToken(objects, 1, ETokenType.Characters, 3, "key");
+            CheckToken(objects, 2, ETokenType.Field, 0, "key");
+            CheckToken(objects, 3, ETokenType.Characters, 9, "value");
         }
 
         [TestMethod]
@@ -27,8 +28,9 @@ namespace logviewer.test.Readers
         {
             var objects = ReadTokens("{ \"key\":4711 }").ToArray();
             CheckToken(objects, 0, ETokenType.Item, 0);
-            CheckToken(objects, 1, ETokenType.Field, 0, "key");
-            CheckToken(objects, 2, ETokenType.Characters, 8, "4711");
+            CheckToken(objects, 1, ETokenType.Characters, 3, "key");
+            CheckToken(objects, 2, ETokenType.Field, 0, "key");
+            CheckToken(objects, 3, ETokenType.Characters, 8, "4711");
         }
 
         [TestMethod]
@@ -36,8 +38,9 @@ namespace logviewer.test.Readers
         {
             var objects = ReadTokens("{ \"key\":true }").ToArray();
             CheckToken(objects, 0, ETokenType.Item, 0);
-            CheckToken(objects, 1, ETokenType.Field, 0, "key");
-            CheckToken(objects, 2, ETokenType.Characters, 8, "true");
+            CheckToken(objects, 1, ETokenType.Characters, 3, "key");
+            CheckToken(objects, 2, ETokenType.Field, 0, "key");
+            CheckToken(objects, 3, ETokenType.Characters, 8, "true");
         }
 
         [TestMethod]
@@ -45,8 +48,9 @@ namespace logviewer.test.Readers
         {
             var objects = ReadTokens("{ \"key\":false }").ToArray();
             CheckToken(objects, 0, ETokenType.Item, 0);
-            CheckToken(objects, 1, ETokenType.Field, 0, "key");
-            CheckToken(objects, 2, ETokenType.Characters, 8, "false");
+            CheckToken(objects, 1, ETokenType.Characters, 3, "key");
+            CheckToken(objects, 2, ETokenType.Field, 0, "key");
+            CheckToken(objects, 3, ETokenType.Characters, 8, "false");
         }
 
         [TestMethod]
@@ -54,8 +58,9 @@ namespace logviewer.test.Readers
         {
             var objects = ReadTokens("{ \"key\":null }").ToArray();
             CheckToken(objects, 0, ETokenType.Item, 0);
-            CheckToken(objects, 1, ETokenType.Field, 0, "key");
-            CheckToken(objects, 2, ETokenType.Characters, 8, "null");
+            CheckToken(objects, 1, ETokenType.Characters, 3, "key");
+            CheckToken(objects, 2, ETokenType.Field, 0, "key");
+            CheckToken(objects, 3, ETokenType.Characters, 8, "null");
         }
         
         [TestMethod]
@@ -63,14 +68,20 @@ namespace logviewer.test.Readers
         {
             var objects = ReadTokens("{ \"key\":{ \"test\" : 1234, \"foo\":\"bar\", \"bang\": { \"test\":4321 } }, \"abc\":\"def\" }").ToArray();
             CheckToken(objects, 0, ETokenType.Item, 0);
-            CheckToken(objects, 1, ETokenType.Field, 0, "key.test");
-            CheckToken(objects, 2, ETokenType.Characters, 19, "1234");
-            CheckToken(objects, 3, ETokenType.Field, 0, "key.foo");
-            CheckToken(objects, 4, ETokenType.Characters, 32, "bar");
-            CheckToken(objects, 5, ETokenType.Field, 0, "key.bang.test");
-            CheckToken(objects, 6, ETokenType.Characters, 55, "4321");
-            CheckToken(objects, 7, ETokenType.Field, 0, "abc");
-            CheckToken(objects, 8, ETokenType.Characters, 72, "def");
+            CheckToken(objects, 1, ETokenType.Characters, 3, "key");
+            CheckToken(objects, 2, ETokenType.Characters, 11, "test");
+            CheckToken(objects, 3, ETokenType.Field, 0, "key.test");
+            CheckToken(objects, 4, ETokenType.Characters, 19, "1234");
+            CheckToken(objects, 5, ETokenType.Characters, 26, "foo");
+            CheckToken(objects, 6, ETokenType.Field, 0, "key.foo");
+            CheckToken(objects, 7, ETokenType.Characters, 32, "bar");
+            CheckToken(objects, 8, ETokenType.Characters, 39, "bang");
+            CheckToken(objects, 9, ETokenType.Characters, 49, "test");
+            CheckToken(objects, 10, ETokenType.Field, 0, "key.bang.test");
+            CheckToken(objects, 11, ETokenType.Characters, 55, "4321");
+            CheckToken(objects, 12, ETokenType.Characters, 66, "abc");
+            CheckToken(objects, 13, ETokenType.Field, 0, "abc");
+            CheckToken(objects, 14, ETokenType.Characters, 72, "def");
         }
 
         [TestMethod]
@@ -78,8 +89,10 @@ namespace logviewer.test.Readers
         {
             var objects = ReadTokens("{ \"key\":1234, \"array\":[1, 2, 3, [ true, false], 4, 5 ] }").ToArray();
             CheckToken(objects, 0, ETokenType.Item, 0);
-            CheckToken(objects, 1, ETokenType.Field, 0, "key");
-            CheckToken(objects, 2, ETokenType.Characters, 8, "1234");
+            CheckToken(objects, 1, ETokenType.Characters, 3, "key");
+            CheckToken(objects, 2, ETokenType.Field, 0, "key");
+            CheckToken(objects, 3, ETokenType.Characters, 8, "1234");
+            CheckToken(objects, 4, ETokenType.Characters, 15, "array");
         }
 
         [TestMethod]
@@ -87,10 +100,14 @@ namespace logviewer.test.Readers
         {
             var objects = ReadTokens("{ \"key1\":4711  , \"key2\":\"mygreatvalue\" }").ToArray();
             CheckToken(objects, 0, ETokenType.Item, 0);
-            CheckToken(objects, 1, ETokenType.Field, 0, "key1");
-            CheckToken(objects, 2, ETokenType.Characters, 9, "4711");
-            CheckToken(objects, 3, ETokenType.Field, 0, "key2");
-            CheckToken(objects, 4, ETokenType.Characters, 25, "mygreatvalue");
+            CheckToken(objects, 1, ETokenType.Characters, 3, "key");
+            CheckToken(objects, 2, ETokenType.Characters, 6, "1");
+            CheckToken(objects, 3, ETokenType.Field, 0, "key1");
+            CheckToken(objects, 4, ETokenType.Characters, 9, "4711");
+            CheckToken(objects, 5, ETokenType.Characters, 18, "key");
+            CheckToken(objects, 6, ETokenType.Characters, 21, "2");
+            CheckToken(objects, 7, ETokenType.Field, 0, "key2");
+            CheckToken(objects, 8, ETokenType.Characters, 25, "mygreatvalue");
         }
         
         [TestMethod]
@@ -98,11 +115,13 @@ namespace logviewer.test.Readers
         {
             var objects = ReadTokens("{ \"key\" : 1 }{ \"key\" : 2 }").ToArray();
             CheckToken(objects, 0, ETokenType.Item, 0);
-            CheckToken(objects, 1, ETokenType.Field, 0, "key");
-            CheckToken(objects, 2, ETokenType.Characters, 10, "1");
-            CheckToken(objects, 3, ETokenType.Item, 13);
-            CheckToken(objects, 4, ETokenType.Field, 0, "key");
-            CheckToken(objects, 5, ETokenType.Characters, 23, "2");
+            CheckToken(objects, 1, ETokenType.Characters, 3, "key");
+            CheckToken(objects, 2, ETokenType.Field, 0, "key");
+            CheckToken(objects, 3, ETokenType.Characters, 10, "1");
+            CheckToken(objects, 4, ETokenType.Item, 13);
+            CheckToken(objects, 5, ETokenType.Characters, 16, "key");
+            CheckToken(objects, 6, ETokenType.Field, 0, "key");
+            CheckToken(objects, 7, ETokenType.Characters, 23, "2");
         }
 
         [TestMethod]
@@ -110,11 +129,13 @@ namespace logviewer.test.Readers
         {
             var objects = ReadTokens("{ \"key\" : 1 }\t{ \"key\" : 2 }").ToArray();
             CheckToken(objects, 0, ETokenType.Item, 0);
-            CheckToken(objects, 1, ETokenType.Field, 0, "key");
-            CheckToken(objects, 2, ETokenType.Characters, 10, "1");
-            CheckToken(objects, 3, ETokenType.Item, 14);
-            CheckToken(objects, 4, ETokenType.Field, 0, "key");
-            CheckToken(objects, 5, ETokenType.Characters, 24, "2");
+            CheckToken(objects, 1, ETokenType.Characters, 3, "key");
+            CheckToken(objects, 2, ETokenType.Field, 0, "key");
+            CheckToken(objects, 3, ETokenType.Characters, 10, "1");
+            CheckToken(objects, 4, ETokenType.Item, 14);
+            CheckToken(objects, 5, ETokenType.Characters, 17, "key");
+            CheckToken(objects, 6, ETokenType.Field, 0, "key");
+            CheckToken(objects, 7, ETokenType.Characters, 24, "2");
         }
 
         [TestMethod]
@@ -122,11 +143,13 @@ namespace logviewer.test.Readers
         {
             var objects = ReadTokens("{ \"key\" : 1 }\r\n{ \"key\" : 2 }\r\n").ToArray();
             CheckToken(objects, 0, ETokenType.Item, 0);
-            CheckToken(objects, 1, ETokenType.Field, 0, "key");
-            CheckToken(objects, 2, ETokenType.Characters, 10, "1");
-            CheckToken(objects, 3, ETokenType.Item, 15);
-            CheckToken(objects, 4, ETokenType.Field, 0, "key");
-            CheckToken(objects, 5, ETokenType.Characters, 25, "2");
+            CheckToken(objects, 1, ETokenType.Characters, 3, "key");
+            CheckToken(objects, 2, ETokenType.Field, 0, "key");
+            CheckToken(objects, 3, ETokenType.Characters, 10, "1");
+            CheckToken(objects, 4, ETokenType.Item, 15);
+            CheckToken(objects, 5, ETokenType.Characters, 18, "key");
+            CheckToken(objects, 6, ETokenType.Field, 0, "key");
+            CheckToken(objects, 7, ETokenType.Characters, 25, "2");
         }
 
         [TestMethod]
@@ -134,11 +157,13 @@ namespace logviewer.test.Readers
         {
             var objects = ReadTokens("{ \"key\" : 1 },{ \"key\" : 2 },").ToArray();
             CheckToken(objects, 0, ETokenType.Item, 0);
-            CheckToken(objects, 1, ETokenType.Field, 0, "key");
-            CheckToken(objects, 2, ETokenType.Characters, 10, "1");
-            CheckToken(objects, 3, ETokenType.Item, 14);
-            CheckToken(objects, 4, ETokenType.Field, 0, "key");
-            CheckToken(objects, 5, ETokenType.Characters, 24, "2");
+            CheckToken(objects, 1, ETokenType.Characters, 3, "key");
+            CheckToken(objects, 2, ETokenType.Field, 0, "key");
+            CheckToken(objects, 3, ETokenType.Characters, 10, "1");
+            CheckToken(objects, 4, ETokenType.Item, 14);
+            CheckToken(objects, 5, ETokenType.Characters, 17, "key");
+            CheckToken(objects, 6, ETokenType.Field, 0, "key");
+            CheckToken(objects, 7, ETokenType.Characters, 24, "2");
         }
 
         [TestMethod]
@@ -146,11 +171,13 @@ namespace logviewer.test.Readers
         {
             var objects = ReadTokens("\x1E{ \"key\" : 1 }\n\x1E{ \"key\" : 2 }\n").ToArray();
             CheckToken(objects, 0, ETokenType.Item, 1);
-            CheckToken(objects, 1, ETokenType.Field, 0, "key");
-            CheckToken(objects, 2, ETokenType.Characters, 11, "1");
-            CheckToken(objects, 3, ETokenType.Item, 16);
-            CheckToken(objects, 4, ETokenType.Field, 0, "key");
-            CheckToken(objects, 5, ETokenType.Characters, 26, "2");
+            CheckToken(objects, 1, ETokenType.Characters, 4, "key");
+            CheckToken(objects, 2, ETokenType.Field, 0, "key");
+            CheckToken(objects, 3, ETokenType.Characters, 11, "1");
+            CheckToken(objects, 4, ETokenType.Item, 16);
+            CheckToken(objects, 5, ETokenType.Characters, 19, "key");
+            CheckToken(objects, 6, ETokenType.Field, 0, "key");
+            CheckToken(objects, 7, ETokenType.Characters, 26, "2");
         }
 
         [TestMethod]
@@ -158,11 +185,13 @@ namespace logviewer.test.Readers
         {
             var objects = ReadTokens("/* 1 */\n{ \"key\" : 1 }\n/* 2 */\n{ \"key\" : 2 }\n").ToArray();
             CheckToken(objects, 0, ETokenType.Item, 8);
-            CheckToken(objects, 1, ETokenType.Field, 0, "key");
-            CheckToken(objects, 2, ETokenType.Characters, 18, "1");
-            CheckToken(objects, 3, ETokenType.Item, 30);
-            CheckToken(objects, 4, ETokenType.Field, 0, "key");
-            CheckToken(objects, 5, ETokenType.Characters, 40, "2");
+            CheckToken(objects, 1, ETokenType.Characters, 11, "key");
+            CheckToken(objects, 2, ETokenType.Field, 0, "key");
+            CheckToken(objects, 3, ETokenType.Characters, 18, "1");
+            CheckToken(objects, 4, ETokenType.Item, 30);
+            CheckToken(objects, 5, ETokenType.Characters, 33, "key");
+            CheckToken(objects, 6, ETokenType.Field, 0, "key");
+            CheckToken(objects, 7, ETokenType.Characters, 40, "2");
         }
 
         [TestMethod]
@@ -170,9 +199,11 @@ namespace logviewer.test.Readers
         {
             var objects = ReadTokens("{ \"key\" { false } } { \"key\" : 1234 }").ToArray();
             CheckToken(objects, 0, ETokenType.Item, 0);
-            CheckToken(objects, 1, ETokenType.Item, 16);
-            CheckToken(objects, 2, ETokenType.Field, 0, "key");
-            CheckToken(objects, 3, ETokenType.Characters, 26, "1234");
+            CheckToken(objects, 1, ETokenType.Characters, 3, "key");
+            CheckToken(objects, 2, ETokenType.Item, 20);
+            CheckToken(objects, 3, ETokenType.Characters, 23, "key");
+            CheckToken(objects, 4, ETokenType.Field, 0, "key");
+            CheckToken(objects, 5, ETokenType.Characters, 30, "1234");
         }
 
         [TestMethod]
@@ -182,7 +213,7 @@ namespace logviewer.test.Readers
 
             // test the reader
             var sw = Stopwatch.StartNew();
-            ReadTokens(data).ToList();
+            ReadTokens(data, 4*10000).ToList();
             sw.Stop();
             Trace.WriteLine($"10000 JSON objects read using reader in {sw.ElapsedMilliseconds}ms");
 
@@ -208,9 +239,9 @@ namespace logviewer.test.Readers
             Assert.AreEqual(position, tokens[index].Position, $"Incorrect token position returned, expected {position} and got {tokens[index].Position}");
         }
 
-        private IEnumerable<Token> ReadTokens(string json)
+        private IEnumerable<Token> ReadTokens(string json, int bufferSize = 256)
         {
-            var buffer = new Token[256];
+            var buffer = new Token[bufferSize];
             using (var reader = new JsonTokenReader(new MemoryStream(Encoding.Default.GetBytes(json)), Encoding.Default, string.Empty, string.Empty))
             {
                 var count = reader.Read(buffer, 0, buffer.Length);

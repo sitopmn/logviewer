@@ -90,9 +90,8 @@ namespace logviewer.test.Readers
 
             Assert.AreEqual(1, objects.Length);
 
-            Assert.AreEqual(3, objects[0].Fields.Count);
+            Assert.AreEqual(2, objects[0].Fields.Count);
             Assert.AreEqual("1234", objects[0].Fields["key"]);
-            Assert.AreEqual("[...]", objects[0].Fields["array"]);
         }
 
         [TestMethod]
@@ -157,7 +156,7 @@ namespace logviewer.test.Readers
 
             Assert.AreEqual(1, objects.Length);
 
-            Assert.AreEqual(1, objects[0].Fields.Count);
+            Assert.AreEqual(2, objects[0].Fields.Count);
         }
 
         [TestMethod]
