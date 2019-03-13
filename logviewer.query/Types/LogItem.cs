@@ -18,11 +18,11 @@ namespace logviewer.query
         public int Line { get; private set; }
         public Dictionary<string, object> Fields { get; private set; }
 
-        public LogItem(string message, string file, string member, long position, int line)
+        public LogItem(string raw, string file, string member, long position, int line)
         {
-            if (message == null)
+            if (raw == null)
             {
-                throw new ArgumentNullException("message");
+                throw new ArgumentNullException("raw");
             }
 
             File = file;
@@ -30,13 +30,13 @@ namespace logviewer.query
             Position = position;
             Line = line;
             Fields = new Dictionary<string, object>();
-            Message = message;
+            Raw = raw;
         }
 
-        public string Message
+        public string Raw
         {
-            get => Fields.ContainsKey("message") ? (string)Fields["message"] : string.Empty;
-            set => Fields["message"] = value;
+            get => Fields.ContainsKey("_raw") ? (string)Fields["_raw"] : string.Empty;
+            set => Fields["_raw"] = value;
         }
 
         public object GetValue(string field)
@@ -78,7 +78,7 @@ namespace logviewer.query
 
         public override int GetHashCode()
         {
-            return Fields.GetHashCode() ^ File.GetHashCode() ^ Line.GetHashCode() ^ Member.GetHashCode() ^ Message.GetHashCode() ^ Position.GetHashCode();
+            return Fields.GetHashCode() ^ File.GetHashCode() ^ Line.GetHashCode() ^ Member.GetHashCode() ^ Raw.GetHashCode() ^ Position.GetHashCode();
         }
 
         public override bool Equals(object obj)

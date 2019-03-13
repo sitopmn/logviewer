@@ -94,14 +94,7 @@ namespace logviewer.query.Visitors
 
         public void Visit(PhraseNode node)
         {
-            if (node.Fields.Count == 0)
-            {
-                Fields = _fields.ToDictionary(f => f, f => typeof(string));
-            }
-            else
-            {
-                Fields = node.Fields;
-            }
+            Fields = node.Fields.Concat(_fields.Select(f => new KeyValuePair<string, Type>(f, typeof(string)))).ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
         }
 
         public void Visit(ScanNode node)

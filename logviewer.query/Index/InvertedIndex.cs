@@ -262,10 +262,10 @@ namespace logviewer.query.Index
         /// </summary>
         public void Complete()
         {
-            // generate a message field if no fields were indexed
-            if (_fields.Count == 0)
+            // add the raw field if missing
+            if (!_fields.Contains("_raw"))
             {
-                _fields.Add("message");
+                _fields.Add("_raw");
             }
         }
         

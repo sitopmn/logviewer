@@ -130,7 +130,7 @@ namespace logviewer.query.Nodes
         
         private bool IsMatch(LogItem item)
         {
-            var match = _pattern.Match(item.Message);
+            var match = _pattern.Match(item.Raw);
             if (match.Success)
             {
                 if (match.Captures.Length > 0)

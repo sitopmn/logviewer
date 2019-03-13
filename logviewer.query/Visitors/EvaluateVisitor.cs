@@ -68,7 +68,7 @@ namespace logviewer.query.Visitors
                 var newFields = node.Projections.Select(p => p(i)).ToArray();
                 i.Fields.Clear();
                 for (var n = 0; n < node.Names.Length; n++) i.Fields[node.Names[n]] = newFields[n];
-                if (!i.Fields.ContainsKey("message")) i.Fields["message"] = string.Empty;
+                if (!i.Fields.ContainsKey("_raw")) i.Fields["_raw"] = string.Empty;
                 return i;
             });
         }

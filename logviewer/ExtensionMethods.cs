@@ -23,7 +23,7 @@ namespace logviewer
         {
             return fields.Select((f, i) => new ColumnData()
             {
-                HeaderText = f.Key,
+                HeaderText = f.Key == "_raw" ? "Raw Message" : f.Key,
                 DisplayMember = "Fields[" + EscapePropertyPath(f.Key) + "]",
                 DisplayField = f.Key,
                 DisplayType = f.Value,

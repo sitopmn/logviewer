@@ -32,13 +32,13 @@ namespace logviewer.Interfaces
         int Line { get; }
 
         /// <summary>
+        /// Gets the raw message of the log item
+        /// </summary>
+        string Raw { get; }
+
+        /// <summary>
         /// Gets the fields of the log item
         /// </summary>
         Dictionary<string, object> Fields { get; }
-
-        /// <summary>
-        /// Gets the message of the log item
-        /// </summary>
-        string Message { get; }
     }
 }

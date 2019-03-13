@@ -20,7 +20,7 @@ namespace logviewer.test.Readers
         {
             var lines = Enumerable.Range(0, 5000).Select(i => $"Line {i}").ToList();
             var reader = CreateReader(lines, "\r\n");
-            Assert.IsTrue(lines.All(l => reader.Read().Message == l));
+            Assert.IsTrue(lines.All(l => reader.Read().Raw == l));
         }
 
         [TestMethod]
@@ -28,7 +28,7 @@ namespace logviewer.test.Readers
         {
             var lines = Enumerable.Range(0, 5000).Select(i => $"Line {i}").ToList();
             var reader = CreateReader(lines, "\n\r");
-            Assert.IsTrue(lines.All(l => reader.Read().Message == l));
+            Assert.IsTrue(lines.All(l => reader.Read().Raw == l));
         }
 
         [TestMethod]
@@ -36,7 +36,7 @@ namespace logviewer.test.Readers
         {
             var lines = Enumerable.Range(0, 5000).Select(i => $"Line {i}").ToList();
             var reader = CreateReader(lines, "\n");
-            Assert.IsTrue(lines.All(l => reader.Read().Message == l));
+            Assert.IsTrue(lines.All(l => reader.Read().Raw == l));
         }
 
         [TestMethod]
@@ -44,7 +44,7 @@ namespace logviewer.test.Readers
         {
             var lines = Enumerable.Range(0, 10).Select(i => $"Line {i}\r\n").Concat(Enumerable.Range(10, 10).Select(i => $"Line {i}\n\r")).Concat(Enumerable.Range(20, 10).Select(i => $"Line {i}\n")).ToList();
             var reader = CreateReader(lines, "");
-            Assert.IsTrue(lines.All(l => reader.Read().Message == l.TrimEnd()));
+            Assert.IsTrue(lines.All(l => reader.Read().Raw == l.TrimEnd()));
         }
 
         [TestMethod]
@@ -77,7 +77,7 @@ namespace logviewer.test.Readers
             var reader = CreateReader(lines, "\r\n");
             reader.Read();
             reader.Seek(offset, 1000, SeekOrigin.Begin);
-            Assert.IsTrue(lines.Skip(1000).All(l => reader.Read().Message == l));
+            Assert.IsTrue(lines.Skip(1000).All(l => reader.Read().Raw == l));
         }
 
         [TestMethod]
@@ -125,7 +125,7 @@ namespace logviewer.test.Readers
         public void ReadItemReturnsSingleLineCorrectly()
         {
             var reader = CreateReader(new[] { "Test" });
-            Assert.AreEqual("Test", reader.Read().Message);
+            Assert.AreEqual("Test", reader.Read().Raw);
             Assert.AreEqual(null, reader.Read());
         }
 
@@ -140,7 +140,7 @@ namespace logviewer.test.Readers
         public void ReadItemReturnsEmptyLineCorrectly()
         {
             var reader = CreateReader(new[] { "", "" });
-            Assert.AreEqual("", reader.Read().Message);
+            Assert.AreEqual("", reader.Read().Raw);
             Assert.AreEqual(null, reader.Read());
         }
 
@@ -148,8 +148,8 @@ namespace logviewer.test.Readers
         public void ReadItemReturnsDoubleEmptyLineCorrectly()
         {
             var reader = CreateReader(new[] { "", "", "" });
-            Assert.AreEqual("", reader.Read().Message);
-            Assert.AreEqual("", reader.Read().Message);
+            Assert.AreEqual("", reader.Read().Raw);
+            Assert.AreEqual("", reader.Read().Raw);
             Assert.AreEqual(null, reader.Read());
         }
 
@@ -157,9 +157,9 @@ namespace logviewer.test.Readers
         public void ReadItemReturnsInterleavedEmptyLineCorrectly()
         {
             var reader = CreateReader(new[] { "Foo", "", "Bar" });
-            Assert.AreEqual("Foo", reader.Read().Message);
-            Assert.AreEqual("", reader.Read().Message);
-            Assert.AreEqual("Bar", reader.Read().Message);
+            Assert.AreEqual("Foo", reader.Read().Raw);
+            Assert.AreEqual("", reader.Read().Raw);
+            Assert.AreEqual("Bar", reader.Read().Raw);
             Assert.AreEqual(null, reader.Read());
         }
 

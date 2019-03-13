@@ -25,7 +25,7 @@ namespace logviewer.Converters
         /// <returns></returns>
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
-            if (value is IList<ColumnData> columns && columns.Count > 0 && !columns.All(c => c.HeaderText == "message"))
+            if (value is IList<ColumnData> columns && columns.Count > 0 && !columns.All(c => c.HeaderText == "_raw"))
             {
                 return Visibility.Visible;
             }

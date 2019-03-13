@@ -40,7 +40,6 @@ namespace logviewer.query
 
         // variables
         internal static readonly ParameterExpression ItemVariable = Expression.Variable(typeof(LogItem), "item");
-        private static readonly ParameterExpression StringParameter = Expression.Parameter(typeof(string), "message");
         private static readonly ParameterExpression FileParameter = Expression.Parameter(typeof(string), "file");
         private static readonly ParameterExpression LineParameter = Expression.Parameter(typeof(int), "line");
         private static readonly ParameterExpression ObjectVariable = Expression.Variable(typeof(object), "object");
