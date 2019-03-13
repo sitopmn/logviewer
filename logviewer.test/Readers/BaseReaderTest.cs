@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -132,6 +133,75 @@ namespace logviewer.test.Readers
             Assert.IsTrue(text.Skip(500).All(c => reader.ReadChar() == c));
         }
 
+        [TestMethod]
+        public void Benchmark()
+        {
+            var rnd = new Random();
+            var text = new string(Enumerable.Range(0, 1000000).Select(i => (char)('A' + rnd.Next('Z' - 'A'))).ToArray());
+            var bytes = Encoding.UTF8.GetBytes(text);
+
+            var sw = Stopwatch.StartNew();
+            for (var n = 0; n < 10; n++)
+            {
+                var decoder = Encoding.UTF8.GetDecoder();
+                var encoder = Encoding.UTF8.GetEncoder();
+                var result = new StringBuilder();
+                var buffer = new char[1024];
+                var bytePointer = 0;
+                while (true)
+                {
+                    var bytesUsed = 0;
+                    var charsUsed = 0;
+                    var completed = false;
+                    decoder.Convert(bytes, bytePointer, bytes.Length - bytePointer, buffer, 0, buffer.Length, false, out bytesUsed, out charsUsed, out completed);
+                    if (charsUsed == 0)
+                    {
+                        break;
+                    }
+                    else
+                    {
+                        bytePointer += bytesUsed;
+                        result.Append(buffer, 0, charsUsed);
+                    }
+
+                    for (var i = 1; i < 30; i++)
+                    {
+                        encoder.GetByteCount(buffer, 0, buffer.Length * i / 31, false);
+                    }
+                }
+            }
+            sw.Stop();
+            Trace.WriteLine($"Decode in blocks completed in {sw.ElapsedMilliseconds / 10} ms");
+
+            sw.Restart();
+            for (var n = 0; n < 10; n++)
+            {
+                var decoder = Encoding.UTF8.GetDecoder();
+                var chars = new char[1];
+                var bytePointer = 0;
+                while (bytePointer < bytes.Length)
+                {
+                    var bytesUsed = 0;
+                    var charsUsed = 0;
+                    var completed = false;
+                    decoder.Convert(bytes, bytePointer, bytes.Length - bytePointer, chars, 0, 1, false, out bytesUsed, out charsUsed, out completed);
+                    bytePointer += bytesUsed;
+                }
+            }
+            sw.Stop();
+            Trace.WriteLine($"Decode in characters completed in {sw.ElapsedMilliseconds / 10} ms");
+
+            sw.Reset();
+            for (var n = 0; n < 10; n++)
+            {
+                var reader = new TestReader(text, "file", "member");
+                sw.Start();
+                reader.Read();
+                sw.Stop();
+            }
+            Trace.WriteLine($"Reader completed in {sw.ElapsedMilliseconds / 10} ms");
+        }
+
         #endregion
 
         private string CreateText()
@@ -162,7 +232,12 @@ namespace logviewer.test.Readers
 
             public override string Read()
             {
-                throw new NotImplementedException();
+                var builder = new StringBuilder();
+                while (!EndOfStream)
+                {
+                    builder.Append(base.ReadChar());
+                }
+                return builder.ToString();
             }
         }
     }
