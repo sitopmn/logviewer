@@ -70,8 +70,8 @@ namespace logviewer.test.Readers
             var reader = new TestReader(text, "file", "member");
             for (var i = 0; i < text.Length; i++)
             {
-                Assert.AreEqual(i, reader.Position);
                 reader.ReadChar();
+                Assert.AreEqual(i, reader.Position);
             }
         }
 

@@ -62,10 +62,15 @@ namespace logviewer.query.Readers
         {
             ILogItem result = null;
             var line = new StringBuilder();
-            var linePosition = Position;
+            var linePosition = -1l;
             while (true)
             {
                 var c = ReadChar();
+                if (linePosition < 0)
+                {
+                    linePosition = Position;
+                }
+
                 if (c < 0)
                 {
                     break;
@@ -78,9 +83,6 @@ namespace logviewer.query.Readers
                     {
                         ReadChar();
                     }
-
-                    line.Clear();
-                    linePosition = Position;
                     break;
                 }
                 else if (c == '\n')
@@ -91,9 +93,6 @@ namespace logviewer.query.Readers
                     {
                         ReadChar();
                     }
-
-                    line.Clear();
-                    linePosition = Position;
                     break;
                 }
                 else

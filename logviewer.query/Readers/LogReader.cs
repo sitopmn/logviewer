@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
@@ -64,9 +65,14 @@ namespace logviewer.query.Readers
         private long _streamPosition;
 
         /// <summary>
-        /// Current position within the input stream
+        /// Position of the character in <see cref="_decoded"/> at <see cref="_lastIndex"/>
         /// </summary>
-        private long _currentPosition;
+        private long _lastPosition;
+
+        /// <summary>
+        /// Index of the last character in <see cref="_decoded"/> for which a position was calculatd
+        /// </summary>
+        private int _lastIndex;
         
         #endregion
 
@@ -96,7 +102,7 @@ namespace logviewer.query.Readers
         /// <summary>
         /// Gets a value indicating the stream contains no further data
         /// </summary>
-        public bool EndOfStream => !EnsureBuffer();
+        public bool EndOfStream => _decodedIndex >= _decodedChars && !EnsureBuffer();
 
         /// <summary>
         /// Gets the current file name
@@ -111,7 +117,20 @@ namespace logviewer.query.Readers
         /// <summary>
         /// Gets the current position of the reader
         /// </summary>
-        public long Position => _currentPosition;
+        public long Position
+        {
+            get
+            {
+                var chars = _decodedIndex - 1 - _lastIndex;
+                if (chars > 0)
+                {
+                    _lastPosition += _encoding.GetByteCount(_decoded, _lastIndex, chars);
+                    _lastIndex += chars;
+                }
+
+                return _lastPosition;
+            }
+        }
 
         /// <summary>
         /// Gets the index of the current item
@@ -130,26 +149,28 @@ namespace logviewer.query.Readers
         /// <returns>Actual position of the stream after the seek operation</returns>
         public virtual long Seek(long offset, int index, SeekOrigin origin)
         {
+            var currentPosition = _lastPosition + _encoding.GetByteCount(_decoded, _lastIndex, _decodedIndex - _lastIndex);
+
             // calculate the target position 
             if (origin == SeekOrigin.Current)
             {
-                offset = _currentPosition + offset;
+                offset = currentPosition + offset;
             }
             else if (origin == SeekOrigin.End)
             {
                 throw new NotSupportedException();
             }
 
-            if (offset < _currentPosition) 
+            if (offset < currentPosition) 
             {
                 throw new InvalidOperationException("Cannot reverse seek");
             }
             else if (offset <= _streamPosition)
             {
                 // target offset is somewhere within the buffers
-                while (_currentPosition < offset)
+                while (currentPosition < offset)
                 {
-                    _currentPosition += _encoding.GetByteCount(_decoded, _decodedIndex++, 1);
+                    currentPosition += _encoding.GetByteCount(_decoded, _decodedIndex++, 1);
                 }
             }
             else
@@ -172,7 +193,8 @@ namespace logviewer.query.Readers
                     }
                 }
 
-                _currentPosition = _streamPosition;
+                _lastPosition = _streamPosition;
+                _lastIndex = 0;
                 _decodedChars = 0;
                 _decodedIndex = 0;
                 _undecodedBytes = 0;
@@ -243,9 +265,10 @@ namespace logviewer.query.Readers
         /// Reads a single character from the stream without consuming it
         /// </summary>
         /// <returns>A character or -1 on EOF</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         protected int PeekChar()
         {
-            if (!EnsureBuffer())
+            if (_decodedIndex >= _decodedChars && !EnsureBuffer())
             {
                 return -1;
             }
@@ -257,16 +280,15 @@ namespace logviewer.query.Readers
         /// Reads a single character
         /// </summary>
         /// <returns>A character or -1 on EOF</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         protected int ReadChar()
         {
-            if (!EnsureBuffer())
+            if (_decodedIndex >= _decodedChars && !EnsureBuffer())
             {
                 return -1;
             }
 
-            var c = _decoded[_decodedIndex];
-            _currentPosition += _encoding.GetByteCount(_decoded, _decodedIndex, 1);
-            _decodedIndex += 1;
+            var c = _decoded[_decodedIndex++];
             return c;
         }
 
@@ -282,7 +304,7 @@ namespace logviewer.query.Readers
             // check if the decoded buffer is completely consumed
             if (_decodedIndex < _decodedChars)
             {
-                return true;
+                throw new InvalidOperationException("Buffer not consumed completely before calling EnsureBuffer()!");
             }
 
             // read bytes from the input stream
@@ -291,7 +313,10 @@ namespace logviewer.query.Readers
             {
                 return false;
             }
-            
+
+            _lastPosition = _streamPosition - _undecodedBytes;
+            _lastIndex = 0;
+
             _undecodedBytes += bytesRead;
             _streamPosition += bytesRead;
 
@@ -301,7 +326,7 @@ namespace logviewer.query.Readers
             _decoder.Convert(_undecoded, 0, _undecodedBytes, _decoded, 0, _decoded.Length, false, out bytesUsed, out _decodedChars, out completed);
             _undecodedBytes -= bytesUsed;
             _decodedIndex = 0;
-
+            
             // copy undecoded bytes to the start of the buffer
             if (!completed)
             {

@@ -39,7 +39,6 @@ namespace logviewer.query.Readers
             var index = offset;
             while (index < end)
             {
-                var position = Position;
                 var r = ReadChar();
                 if (r < 0)
                 {
@@ -56,7 +55,7 @@ namespace logviewer.query.Readers
                             _level += 1;
                             _history.Push(State.Document);
                             _state = State.KeyStart;
-                            index = OnDocumentStart(buffer, index, position);
+                            index = OnDocumentStart(buffer, index, Position);
                         }
                         else if (c == '/')
                         {
@@ -205,7 +204,7 @@ namespace logviewer.query.Readers
                             _state = _history.Pop();
                             if (_level == 0)
                             {
-                                index = OnDocumentCharacter(buffer, index, position, c);
+                                index = OnDocumentCharacter(buffer, index, c);
                                 index = OnDocumentEnd(buffer, index);
                             }
                             else
@@ -282,7 +281,7 @@ namespace logviewer.query.Readers
                             if (_level == 0)
                             {
                                 _state = State.Document;
-                                index = OnDocumentCharacter(buffer, index, position, c);
+                                index = OnDocumentCharacter(buffer, index, c);
                                 index = OnDocumentEnd(buffer, index);
                             }
                         }
@@ -308,7 +307,7 @@ namespace logviewer.query.Readers
                     _state == State.ValueEnd ||
                     _state == State.Skip)
                 {
-                    index = OnDocumentCharacter(buffer, index, position, c);
+                    index = OnDocumentCharacter(buffer, index, c);
                 }
             }
 
@@ -316,7 +315,7 @@ namespace logviewer.query.Readers
         }
 
         protected virtual int OnDocumentStart(T[] buffer, int offset, long position) => offset;
-        protected virtual int OnDocumentCharacter(T[] buffer, int offset, long position, char c) => offset;
+        protected virtual int OnDocumentCharacter(T[] buffer, int offset, char c) => offset;
 
         protected virtual int OnObjectStart(T[] buffer, int offset) => offset;
 

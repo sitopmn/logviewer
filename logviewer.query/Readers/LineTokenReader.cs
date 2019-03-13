@@ -31,6 +31,11 @@ namespace logviewer.query.Readers
         private char _previous;
 
         /// <summary>
+        /// True if the previous character was a letter
+        /// </summary>
+        private bool _previousIsLetter;
+       
+        /// <summary>
         /// Initializes a new instance of the <see cref="LineTokenReader"/> class
         /// </summary>
         /// <param name="stream">Stream providing the source data</param>
@@ -76,7 +81,7 @@ namespace logviewer.query.Readers
                 return buffer[0];
             }
         }
-
+        
         /// <summary>
         /// Reads index tokens into a buffer
         /// </summary>
@@ -93,19 +98,17 @@ namespace logviewer.query.Readers
                 _state = 0;
 
                 // return the token for the first line
-                buffer[offset++] = CreateItemToken(0);
+                buffer[offset++] = new Token(ETokenType.Item, File, Member, Position);
                 count -= 1;
             }
 
             while (count > 0)
             {
-                var position = Position;
                 var r = ReadChar();
                 if (r < 0) break;
                 var c = (char)r;
                 var isLetter = char.IsLetter(c);
                 var isDigit = char.IsDigit(c);
-                var isUpper = char.IsUpper(c);
 
                 switch (_state)
                 {
@@ -118,8 +121,8 @@ namespace logviewer.query.Readers
                         {
                             _state = 1;
                             _token.Clear();
-                            _token.Append((char)c);
-                            _tokenPosition = position;
+                            _token.Append(c);
+                            _tokenPosition = Position;
                         }
                         break;
 
@@ -129,61 +132,49 @@ namespace logviewer.query.Readers
                         {
                             if (_token.Length > 0)
                             {
-                                buffer[offset++] = CreateCharacterToken(_token.ToString(), _tokenPosition);
+                                buffer[offset++] = new Token(ETokenType.Characters, _token.ToString(), File, Member, _tokenPosition);
                                 count -= 1;
                             }
 
                             _state = c;
                         }
-                        else if (isLetter && char.IsDigit(_previous)) // split on change to letters
+                        else if (!isLetter && !isDigit) // stop on non letter or digit
                         {
                             if (_token.Length > 0)
                             {
-                                buffer[offset++] = CreateCharacterToken(_token.ToString(), _tokenPosition);
-                                count -= 1;
-                            }
-
-                            _token.Clear();
-                            _token.Append((char)c);
-                            _tokenPosition = position;
-                        }
-                        else if (isDigit && char.IsLetter(_previous)) // split on change to digits
-                        {
-                            if (_token.Length > 0)
-                            {
-                                buffer[offset++] = CreateCharacterToken(_token.ToString(), _tokenPosition);
-                                count -= 1;
-                            }
-
-                            _token.Clear();
-                            _token.Append((char)c);
-                            _tokenPosition = position;
-                        }
-                        else if (isUpper && char.IsLower(_previous)) // split on camel case
-                        {
-                            if (_token.Length > 0)
-                            {
-                                buffer[offset++] = CreateCharacterToken(_token.ToString(), _tokenPosition);
-                                count -= 1;
-                            }
-
-                            _token.Clear();
-                            _token.Append((char)c);
-                            _tokenPosition = position;
-                        }
-                        else if (!isLetter && !isDigit)
-                        {
-                            if (_token.Length > 0)
-                            {
-                                buffer[offset++] = CreateCharacterToken(_token.ToString(), _tokenPosition);
+                                buffer[offset++] = new Token(ETokenType.Characters, _token.ToString(), File, Member, _tokenPosition);
                                 count -= 1;
                             }
 
                             _state = 0;
                         }
+                        else if (char.IsUpper(c) && char.IsLower(_previous)) // split on change from lower case to upper case
+                        {
+                            if (_token.Length > 0)
+                            {
+                                buffer[offset++] = new Token(ETokenType.Characters, _token.ToString(), File, Member, _tokenPosition);
+                                count -= 1;
+                            }
+
+                            _token.Clear();
+                            _token.Append(c);
+                            _tokenPosition = Position;
+                        }
+                        else if (isLetter != _previousIsLetter) // split on change to or from letters
+                        {
+                            if (_token.Length > 0)
+                            {
+                                buffer[offset++] = new Token(ETokenType.Characters, _token.ToString(), File, Member, _tokenPosition);
+                                count -= 1;
+                            }
+
+                            _token.Clear();
+                            _token.Append(c);
+                            _tokenPosition = Position;
+                        }
                         else
                         {
-                            _token.Append((char)c);
+                            _token.Append(c);
                         }
                         break;
 
@@ -195,22 +186,22 @@ namespace logviewer.query.Readers
                         }
                         else if (c == '\n')
                         {
-                            buffer[offset++] = CreateItemToken(position);
+                            buffer[offset++] = new Token(ETokenType.Item, File, Member, Position);
                             count -= 1;
                             _state = c;
                         }
                         else if (isLetter || isDigit)
                         {
-                            buffer[offset++] = CreateItemToken(position);
+                            buffer[offset++] = new Token(ETokenType.Item, File, Member, Position);
                             count -= 1;
                             _state = 1;
                             _token.Clear();
-                            _token.Append((char)c);
-                            _tokenPosition = position;
+                            _token.Append(c);
+                            _tokenPosition = Position;
                         }
                         else
                         {
-                            buffer[offset++] = CreateItemToken(position);
+                            buffer[offset++] = new Token(ETokenType.Item, File, Member, Position);
                             count -= 1;
                             _state = 0;
                         }
@@ -224,22 +215,22 @@ namespace logviewer.query.Readers
                         }
                         else if (c == '\r')
                         {
-                            buffer[offset++] = CreateItemToken(position);
+                            buffer[offset++] = new Token(ETokenType.Item, File, Member, Position);
                             count -= 1;
                             _state = c;
                         }
                         else if (isLetter || isDigit)
                         {
-                            buffer[offset++] = CreateItemToken(position);
+                            buffer[offset++] = new Token(ETokenType.Item, File, Member, Position);
                             count -= 1;
                             _state = 1;
                             _token.Clear();
-                            _token.Append((char)c);
-                            _tokenPosition = position;
+                            _token.Append(c);
+                            _tokenPosition = Position;
                         }
                         else
                         {
-                            buffer[offset++] = CreateItemToken(position);
+                            buffer[offset++] = new Token(ETokenType.Item, File, Member, Position);
                             count -= 1;
                             _state = 0;
                         }
@@ -247,7 +238,7 @@ namespace logviewer.query.Readers
 
                     // second character of line break
                     case 14:
-                        buffer[offset++] = CreateItemToken(position);
+                        buffer[offset++] = new Token(ETokenType.Item, File, Member, Position);
                         count -= 1;
 
                         if (c == '\r' || c == '\n')
@@ -258,8 +249,8 @@ namespace logviewer.query.Readers
                         {
                             _state = 1;
                             _token.Clear();
-                            _token.Append((char)c);
-                            _tokenPosition = position;
+                            _token.Append(c);
+                            _tokenPosition = Position;
                         }
                         else
                         {
@@ -269,48 +260,16 @@ namespace logviewer.query.Readers
                 }
 
                 _previous = c;
+                _previousIsLetter = isLetter;
             }
 
             if (count > 0 && EndOfStream && _token.Length > 0 && _state == 1)
             {
-                buffer[offset++] = CreateCharacterToken(_token.ToString(), _tokenPosition);
+                buffer[offset++] = new Token(ETokenType.Characters, _token.ToString(), File, Member, _tokenPosition);
                 count -= 1;
             }
 
             return total - count;
-        }
-
-        /// <summary>
-        /// Create a token from the given data
-        /// </summary>
-        /// <param name="data">The token data</param>
-        /// <param name="file">The file the line was read from</param>
-        /// <param name="member">The archive member the line was read from</param>
-        /// <param name="position">The starting offset of the token</param>
-        /// <returns>A token as specified</returns>
-        private Token CreateCharacterToken(string token, long position)
-        {
-            return new Token()
-            {
-                Type = ETokenType.Characters,
-                Data = token,
-                File = File,
-                Member = Member,
-                Position = position,
-                IsExact = true,
-            };
-        }
-
-        /// <summary>
-        /// Creates a newline token
-        /// </summary>
-        /// <param name="file">The file the line was read from</param>
-        /// <param name="member">The archive member the line was read from</param>
-        /// <param name="position">The starting offset of the token</param>
-        /// <returns></returns>
-        private Token CreateItemToken(long position)
-        {
-            return new Token() { Type = ETokenType.Item, File = File, Member = Member, Position = position, IsExact = true };
         }
     }
 }

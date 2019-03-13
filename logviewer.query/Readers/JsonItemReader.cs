@@ -83,7 +83,7 @@ namespace logviewer.query.Readers
         /// <param name="position">Position within the source file</param>
         /// <param name="c">The current character</param>
         /// <returns>Offset to store the next token into the buffer</returns>
-        protected override int OnDocumentCharacter(ILogItem[] buffer, int offset, long position, char c)
+        protected override int OnDocumentCharacter(ILogItem[] buffer, int offset, char c)
         {
             _message.Append(c);
             return offset;

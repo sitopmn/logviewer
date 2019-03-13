@@ -40,6 +40,36 @@ namespace logviewer.query
         /// Indicates the position of the token relative to the next token is exact
         /// </summary>
         public bool IsExact;
+        
+        public Token(ETokenType type, string data, string file, string member, long position, bool isExact)
+        {
+            Type = type;
+            Data = data;
+            File = file;
+            Member = member;
+            Position = position;
+            IsExact = isExact;
+        }
+
+        public Token(ETokenType type, string data, string file, string member, long position)
+        {
+            Type = type;
+            Data = data;
+            File = file;
+            Member = member;
+            Position = position;
+            IsExact = false;
+        }
+
+        public Token(ETokenType type, string file, string member, long position)
+        {
+            Type = type;
+            Data = string.Empty;
+            File = file;
+            Member = member;
+            Position = position;
+            IsExact = false;
+        }
     }
 
     /// <summary>

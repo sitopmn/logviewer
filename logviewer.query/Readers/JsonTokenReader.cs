@@ -76,7 +76,7 @@ namespace logviewer.query.Readers
         /// <param name="position">Position within the source file</param>
         /// <param name="c">The current character</param>
         /// <returns>Offset to store the next token into the buffer</returns>
-        protected override int OnDocumentCharacter(Token[] buffer, int offset, long position, char c)
+        protected override int OnDocumentCharacter(Token[] buffer, int offset, char c)
         {
             var currentIsLetter = char.IsLetter(c);
             var currentIsDigit = char.IsDigit(c);
@@ -95,7 +95,7 @@ namespace logviewer.query.Readers
             {
                 if (_token.Length == 0)
                 {
-                    _tokenPosition = position;
+                    _tokenPosition = Position;
                 }
 
                 _token.Append(c);
