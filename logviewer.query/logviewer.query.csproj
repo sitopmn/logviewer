@@ -77,9 +77,6 @@
     <Compile Include="Logs\JsonLogFactory.cs" />
     <Compile Include="Logs\TextLog.cs" />
     <Compile Include="Logs\TextLogFactory.cs" />
-    <Compile Include="Parsing\CsvParser.cs" />
-    <Compile Include="Parsing\JsonParser.cs" />
-    <Compile Include="Parsing\TestParser.cs" />
     <Compile Include="Readers\JsonItemReader.cs" />
     <Compile Include="Readers\JsonReader.cs" />
     <Compile Include="Readers\JsonTokenReader.cs" />

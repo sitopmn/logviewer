@@ -4,7 +4,6 @@ using log4net;
 using logviewer.Interfaces;
 using logviewer.query.Index;
 using logviewer.query.Interfaces;
-using logviewer.query.Parsing;
 using logviewer.query.Readers;
 using logviewer.query.Types;
 using System;

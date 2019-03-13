@@ -2,7 +2,6 @@
 using logviewer.query.Aggregates;
 using logviewer.query.Interfaces;
 using logviewer.query.Nodes;
-using logviewer.query.Parsing;
 using logviewer.query.Visitors;
 using Sprache;
 using System;
@@ -389,23 +388,7 @@ namespace logviewer.query
                 default: return null;
             }
         }
-
-        /// <summary>
-        /// Creates a parser from the given name
-        /// </summary>
-        /// <param name="name">The name of the parser</param>
-        /// <returns>An instance of the specified parser</returns>
-        private static IParser CreateParser(string name)
-        {
-            switch (name)
-            {
-                case "json": return new JsonParser();
-                case "csv": return new CsvParser();
-                case "test": return new TestParser();
-                default: throw new ParseException($"Undefined parser '{name}'");
-            }
-        }
-
+        
         #endregion
     }
 }

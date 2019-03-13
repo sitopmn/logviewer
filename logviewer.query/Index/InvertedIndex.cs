@@ -1,6 +1,5 @@
 ﻿using log4net;
 using logviewer.Interfaces;
-using logviewer.query.Parsing;
 using logviewer.core;
 using System;
 using System.Collections;
