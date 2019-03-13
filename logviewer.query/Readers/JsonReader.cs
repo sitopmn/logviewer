@@ -37,11 +37,16 @@ namespace logviewer.query.Readers
         {
             var end = offset + count;
             var index = offset;
-            while (index < end && !EndOfStream)
+            while (index < end)
             {
                 var position = Position;
-                var c = (char)ReadChar();
+                var r = ReadChar();
+                if (r < 0)
+                {
+                    break;
+                }
 
+                var c = (char)r;
                 switch (_state)
                 {
                     // expect the start of an item

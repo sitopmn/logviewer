@@ -97,10 +97,12 @@ namespace logviewer.query.Readers
                 count -= 1;
             }
 
-            while (count > 0 && !EndOfStream)
+            while (count > 0)
             {
                 var position = Position;
-                var c = (char)ReadChar();
+                var r = ReadChar();
+                if (r < 0) break;
+                var c = (char)r;
                 var isLetter = char.IsLetter(c);
                 var isDigit = char.IsDigit(c);
                 var isUpper = char.IsUpper(c);

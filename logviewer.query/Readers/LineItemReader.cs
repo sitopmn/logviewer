@@ -30,6 +30,31 @@ namespace logviewer.query.Readers
         }
 
         /// <summary>
+        /// Reads multiple log items into a buffer
+        /// </summary>
+        /// <param name="buffer">Buffer to store the elements to</param>
+        /// <param name="offset">Offset of the first element in the buffer</param>
+        /// <param name="count">Number of elements to read</param>
+        /// <returns>Number of elements actually read</returns>
+        public override int Read(ILogItem[] buffer, int offset, int count)
+        {
+            for (var i = 0; i < count; i++)
+            {
+                var item = Read();
+                if (item == null)
+                {
+                    return i;
+                }
+                else
+                {
+                    buffer[i + offset] = item;
+                }
+            }
+
+            return count;
+        }
+
+        /// <summary>
         /// Reads a log item
         /// </summary>
         /// <returns>Log item read</returns>
@@ -38,10 +63,14 @@ namespace logviewer.query.Readers
             ILogItem result = null;
             var line = new StringBuilder();
             var linePosition = Position;
-            while (!EndOfStream)
+            while (true)
             {
                 var c = ReadChar();
-                if (c == '\r')
+                if (c < 0)
+                {
+                    break;
+                }
+                else if (c == '\r')
                 {
                     result = new LogItem(line.ToString(), File, Member, linePosition, Index++);
 

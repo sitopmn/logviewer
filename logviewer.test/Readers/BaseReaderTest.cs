@@ -230,6 +230,11 @@ namespace logviewer.test.Readers
                 return base.PeekChar();
             }
 
+            public override int Read(string[] buffer, int offset, int count)
+            {
+                throw new NotImplementedException();
+            }
+
             public override string Read()
             {
                 var builder = new StringBuilder();

@@ -29,6 +29,11 @@ namespace logviewer.query.Readers
         private readonly byte[] _undecoded = new byte[1024];
 
         /// <summary>
+        /// Array of decoded characters
+        /// </summary>
+        private readonly char[] _decoded = new char[1024];
+
+        /// <summary>
         /// Encoding if the input text
         /// </summary>
         private readonly Encoding _encoding;
@@ -37,36 +42,31 @@ namespace logviewer.query.Readers
         /// Decoder for decoding input text
         /// </summary>
         private readonly Decoder _decoder;
-
+        
         /// <summary>
         /// Number of bytes in <see cref="_undecoded"/>
         /// </summary>
         private int _undecodedBytes;
 
         /// <summary>
-        /// Current position within the input stream
+        /// Number of characters in <see cref="_decoded"/>
+        /// </summary>
+        private int _decodedChars;
+        
+        /// <summary>
+        /// Index within <see cref="_undecoded"/> of the next byte to decode
+        /// </summary>
+        private int _decodedIndex;
+        
+        /// <summary>
+        /// Position of the next byte to read in the input stream
         /// </summary>
         private long _streamPosition;
 
         /// <summary>
-        /// Offset of the current byte in <see cref="_undecoded"/> in the input stream
+        /// Current position within the input stream
         /// </summary>
         private long _currentPosition;
-
-        /// <summary>
-        /// Index within <see cref="_undecoded"/> of the next byte to decode
-        /// </summary>
-        private int _currentIndex;
-
-        /// <summary>
-        /// Last character which was peeked
-        /// </summary>
-        private char _peekCharacter;
-
-        /// <summary>
-        /// Number of bytes consumed by the peeked character
-        /// </summary>
-        private int _peekLength;
         
         #endregion
 
@@ -96,22 +96,8 @@ namespace logviewer.query.Readers
         /// <summary>
         /// Gets a value indicating the stream contains no further data
         /// </summary>
-        public bool EndOfStream
-        {
-            get
-            {
-                if (_currentIndex < _undecodedBytes)
-                {
-                    return false;
-                }
-                else
-                {
-                    EnsureBuffer();
-                    return _currentIndex >= _undecodedBytes;
-                }
-            }
-        }
-        
+        public bool EndOfStream => !EnsureBuffer();
+
         /// <summary>
         /// Gets the current file name
         /// </summary>
@@ -130,7 +116,7 @@ namespace logviewer.query.Readers
         /// <summary>
         /// Gets the index of the current item
         /// </summary>
-        public int Index { get; set; }
+        public int Index { get; protected set; }
 
         #endregion
 
@@ -144,6 +130,7 @@ namespace logviewer.query.Readers
         /// <returns>Actual position of the stream after the seek operation</returns>
         public virtual long Seek(long offset, int index, SeekOrigin origin)
         {
+            // calculate the target position 
             if (origin == SeekOrigin.Current)
             {
                 offset = _currentPosition + offset;
@@ -152,16 +139,18 @@ namespace logviewer.query.Readers
             {
                 throw new NotSupportedException();
             }
-            
-            if (offset < _currentPosition)
+
+            if (offset < _currentPosition) 
             {
                 throw new InvalidOperationException("Cannot reverse seek");
             }
             else if (offset <= _streamPosition)
             {
                 // target offset is somewhere within the buffers
-                _currentIndex += (int)(offset - _currentPosition);
-                _currentPosition = offset;
+                while (_currentPosition < offset)
+                {
+                    _currentPosition += _encoding.GetByteCount(_decoded, _decodedIndex++, 1);
+                }
             }
             else
             {
@@ -184,15 +173,13 @@ namespace logviewer.query.Readers
                 }
 
                 _currentPosition = _streamPosition;
-                _currentIndex = 0;
+                _decodedChars = 0;
+                _decodedIndex = 0;
                 _undecodedBytes = 0;
             }
-
-            _peekCharacter = '\0';
-            _peekLength = 0;
-
+            
             Index = index;
-            return _currentPosition;
+            return offset;
         }
         
         /// <summary>
@@ -208,30 +195,7 @@ namespace logviewer.query.Readers
         /// <param name="offset">Offset of the first element in the buffer</param>
         /// <param name="count">Number of elements to read</param>
         /// <returns>Number of elements actually read</returns>
-        public virtual int Read(T[] buffer, int offset, int count)
-        {
-            if (offset + count > buffer.Length)
-            {
-                throw new ArgumentException("offset + count must be smaller than buffer.Length");
-            }
-
-            var comparer = EqualityComparer<T>.Default;
-            var def = default(T);
-            for (var i = 0; i < count; i++)
-            {
-                var e = Read();
-                if (comparer.Equals(e, def))
-                {
-                    return i;
-                }
-                else
-                {
-                    buffer[i + offset] = e;
-                }
-            }
-
-            return count;
-        }
+        public abstract int Read(T[] buffer, int offset, int count);
 
         /// <summary>
         /// Reads all elements
@@ -281,30 +245,12 @@ namespace logviewer.query.Readers
         /// <returns>A character or -1 on EOF</returns>
         protected int PeekChar()
         {
-            var chars = new char[1];
-            var bytesUsed = 0;
-            var charsUsed = 0;
-            var completed = false;
-
-            if (_currentIndex == _undecodedBytes || _undecodedBytes == 0)
-            {
-                EnsureBuffer();
-            }
-
-            if (_undecodedBytes == 0)
+            if (!EnsureBuffer())
             {
                 return -1;
             }
 
-            if (_peekLength == 0)
-            {
-                _decoder.Convert(_undecoded, _currentIndex, _undecodedBytes - _currentIndex, chars, 0, 1, false, out bytesUsed, out charsUsed, out completed);
-
-                _peekCharacter = chars[0];
-                _peekLength = bytesUsed;
-            }
-
-            return _peekCharacter;
+            return _decoded[_decodedIndex];
         }
 
         /// <summary>
@@ -313,37 +259,15 @@ namespace logviewer.query.Readers
         /// <returns>A character or -1 on EOF</returns>
         protected int ReadChar()
         {
-            var chars = new char[1];
-            var bytesUsed = 0;
-            var charsUsed = 0;
-            var completed = false;
-
-            if (_currentIndex == _undecodedBytes || _undecodedBytes == 0)
-            {
-                EnsureBuffer();
-            }
-
-            if (_undecodedBytes == 0)
+            if (!EnsureBuffer())
             {
                 return -1;
             }
 
-            if (_peekLength > 0)
-            {
-                _currentPosition += _peekLength;
-                _currentIndex += _peekLength;
-                chars[0] = _peekCharacter;
-                _peekLength = 0;
-                _peekCharacter = '\0';
-            }
-            else
-            {
-                _decoder.Convert(_undecoded, _currentIndex, _undecodedBytes - _currentIndex, chars, 0, 1, false, out bytesUsed, out charsUsed, out completed);
-                _currentPosition += bytesUsed;
-                _currentIndex += bytesUsed;
-            }
-
-            return chars[0];
+            var c = _decoded[_decodedIndex];
+            _currentPosition += _encoding.GetByteCount(_decoded, _decodedIndex, 1);
+            _decodedIndex += 1;
+            return c;
         }
 
         #endregion
@@ -353,32 +277,38 @@ namespace logviewer.query.Readers
         /// <summary>
         /// Reads data from the underlying stream, decodes them and saves them to <see cref="_decoded"/>
         /// </summary>
-        private void EnsureBuffer()
+        private bool EnsureBuffer()
         {
-            // skip if there are still characters in the buffer
-            if (_currentIndex < _undecodedBytes)
+            // check if the decoded buffer is completely consumed
+            if (_decodedIndex < _decodedChars)
             {
-                return;
+                return true;
             }
 
-            // copy undecoded bytes to the beginning of the buffer
-            if (_currentIndex < _undecodedBytes)
-            {
-                Array.Copy(_undecoded, _currentIndex, _undecoded, 0, _undecodedBytes - _currentIndex);
-            }
-            else if (_currentIndex > _undecodedBytes)
-            {
-                System.Diagnostics.Debugger.Break();
-            }
-
-            // calculate the number of undecoded bytes currently in the buffer
-            _undecodedBytes -= _currentIndex;
-
-            // fill the undecoded buffer
+            // read bytes from the input stream
             var bytesRead = _stream.Read(_undecoded, _undecodedBytes, _undecoded.Length - _undecodedBytes);
-            _undecodedBytes = bytesRead;
+            if (bytesRead == 0)
+            {
+                return false;
+            }
+            
+            _undecodedBytes += bytesRead;
             _streamPosition += bytesRead;
-            _currentIndex = 0;
+
+            // decode the undecoded buffer
+            var bytesUsed = 0;
+            var completed = false;
+            _decoder.Convert(_undecoded, 0, _undecodedBytes, _decoded, 0, _decoded.Length, false, out bytesUsed, out _decodedChars, out completed);
+            _undecodedBytes -= bytesUsed;
+            _decodedIndex = 0;
+
+            // copy undecoded bytes to the start of the buffer
+            if (!completed)
+            {
+                Array.Copy(_undecoded, bytesUsed, _undecoded, 0, _undecodedBytes - bytesUsed);
+            }
+            
+            return true;
         }
         
         #endregion
