@@ -72,5 +72,23 @@ namespace logviewer.Services
             // fire the loaded event
             Loaded?.Invoke(this, EventArgs.Empty);
         }
+
+        /// <summary>
+        /// Detect the format of the log source
+        /// </summary>
+        /// <param name="source">Source to check</param>
+        /// <returns>Name of the format or <see cref="string.Empty"/> if it couldn't be determined</returns>
+        public string Detect(string[] source)
+        {
+            var matches = _factories.Where(f => f.IsSupported(source)).ToList();
+            if (matches.Count == 0 || matches.Count > 1)
+            {
+                return string.Empty;
+            }
+            else
+            {
+                return matches[0].Name;
+            }
+        }
     }
 }

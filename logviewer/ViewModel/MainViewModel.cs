@@ -398,7 +398,7 @@ namespace logviewer.ViewModel
                 var dlg = new OpenFileDialog();
                 dlg.CheckFileExists = true;
                 dlg.DefaultExt = "";
-                dlg.Filter = "Any File *.*|*.*";
+                dlg.Filter = "Any File (*.*)|*.*|JSON File (*.json)|*.json";
                 dlg.Title = Properties.Resources.Menu_OpenLogFiles;
                 dlg.Multiselect = true;
                 if (dlg.ShowDialog() == false)
@@ -409,30 +409,40 @@ namespace logviewer.ViewModel
                 source = dlg.FileNames;
             }
 
-            // show the open dialog
-            var viewmodel = new DialogOpenViewModel(_logService.Formats, source);
-            if ((bool)await DialogHost.Show(viewmodel))
+            // find the file format
+            var format = _logService.Detect(source);
+            if (string.IsNullOrEmpty(format))
             {
-                // index the log
-                try
+                var viewmodel = new DialogSelectFormatViewModel(_logService.Formats);
+                if ((bool)await DialogHost.Show(viewmodel))
                 {
-                    await Task.Run(() => _logService.Load(source, viewmodel.SelectedFormat, p => Invoke(p2 => ProgressHandler(this, new ProgressEventArgs(p2)), p), CancellationToken.None));
+                    format = viewmodel.SelectedFormat;
                 }
-                catch (Exception ex)
+                else
                 {
-                    MessageQueue.Enqueue(ex.Message);
-                    _logger.Error($"An error occurred while loading: {ex.Message}");
+                    return;
                 }
+            }
 
-                // reset the progress information
-                RaisePropertyChanged(nameof(IsLogOpened));
-                ProgressHandler(this, ProgressEventArgs.End);
+            // index the log
+            try
+            {
+                await Task.Run(() => _logService.Load(source, format, p => Invoke(p2 => ProgressHandler(this, new ProgressEventArgs(p2)), p), CancellationToken.None));
+            }
+            catch (Exception ex)
+            {
+                MessageQueue.Enqueue(ex.Message);
+                _logger.Error($"An error occurred while loading: {ex.Message}");
+            }
 
-                // update the current view
-                if (CurrentTab is IPageViewModel page)
-                {
-                    await page.Update();
-                }
+            // reset the progress information
+            RaisePropertyChanged(nameof(IsLogOpened));
+            ProgressHandler(this, ProgressEventArgs.End);
+
+            // update the current view
+            if (CurrentTab is IPageViewModel page)
+            {
+                await page.Update();
             }
         }
 

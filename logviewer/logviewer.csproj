@@ -149,8 +149,8 @@
     <Compile Include="ViewModel\DialogDeleteViewModel.cs" />
     <Compile Include="ViewModel\DialogHelpViewModel.cs" />
     <Compile Include="ViewModel\DialogManageBookmarksViewModel.cs" />
-    <Compile Include="ViewModel\DialogOpenViewModel.cs" />
     <Compile Include="ViewModel\DialogSaveViewModel.cs" />
+    <Compile Include="ViewModel\DialogSelectFormatViewModel.cs" />
     <Compile Include="ViewModel\ListWrapper.cs" />
     <Compile Include="ViewModel\PageViewModel.cs" />
     <Compile Include="ViewModel\SearchViewModel.cs" />

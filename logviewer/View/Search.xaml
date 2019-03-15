@@ -89,6 +89,8 @@
             </Button>
             <Separator DockPanel.Dock="Left" />
 
+            
+            
             <Button Click="ResetZoomAndPanButton_Click"
                     DockPanel.Dock="Right"
                     IsEnabled="{Binding Chart.Series.Count, Converter={StaticResource GreaterThanConverter}, ConverterParameter=0}"

@@ -73,6 +73,7 @@
     <Compile Include="Index\EliasFanoList.cs" />
     <Compile Include="Interfaces\ILogIndexer.cs" />
     <Compile Include="Interfaces\IParser.cs" />
+    <Compile Include="Logs\FileLogFactory.cs" />
     <Compile Include="Logs\JsonLog.cs" />
     <Compile Include="Logs\JsonLogFactory.cs" />
     <Compile Include="Logs\TextLog.cs" />

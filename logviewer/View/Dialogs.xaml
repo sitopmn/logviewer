@@ -9,31 +9,37 @@
                     xmlns:util="clr-namespace:logviewer.core;assembly=logviewer.core"
                     xmlns:vm="clr-namespace:logviewer.ViewModel">
 
-    <DataTemplate DataType="{x:Type vm:DialogOpenViewModel}">
-        <c:DialogLayout>
+    <DataTemplate DataType="{x:Type vm:DialogSelectFormatViewModel}">
+        <c:DialogLayout Width="400">
             <c:DialogLayout.HeaderContent>
                 <TextBlock Style="{StaticResource MaterialDesignTitleTextBlock}"
-                           Text="{x:Static properties:Resources.Dialogs_EditPanel}" />
+                           Text="Select the log format" />
             </c:DialogLayout.HeaderContent>
             <c:DialogLayout.DialogContent>
-                <Grid>
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="Auto" />
-                    </Grid.RowDefinitions>
-                    <TextBlock Grid.Row="0"
-                               Margin="0 0 0 8"
-                               Style="{StaticResource MaterialDesignCaptionTextBlock}"
-                               Text="Log(s) to open" />
-                    <ListBox Grid.Row="1"
-                             ItemsSource="{Binding Sources}" />
-                    <ComboBox Grid.Row="2"
-                              material:HintAssist.Hint="Select log file format"
-                              material:HintAssist.IsFloating="True"
-                              ItemsSource="{Binding Formats}"
-                              SelectedItem="{Binding SelectedFormat}" />
-                </Grid>
+                <ListBox Margin="-24 0 -24 0"
+                         ItemsSource="{Binding Formats}"
+                         SelectedItem="{Binding SelectedFormat}">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <Grid Height="32">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <material:PackIcon Grid.Column="0"
+                                                   Width="24"
+                                                   Height="24"
+                                                   Margin="8"
+                                                   VerticalAlignment="Center"
+                                                   Kind="Json" />
+                                <TextBlock Grid.Column="1"
+                                           VerticalAlignment="Center"
+                                           Style="{StaticResource MaterialDesignBody1TextBlock}"
+                                           Text="{Binding}" />
+                            </Grid>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
             </c:DialogLayout.DialogContent>
             <c:DialogLayout.ActionContent>
                 <StackPanel HorizontalAlignment="Right"
@@ -53,6 +59,7 @@
                             Command="{x:Static material:DialogHost.CloseDialogCommand}"
                             Content="{x:Static properties:Resources.Dialogs_OpenButton}"
                             IsDefault="True"
+                            IsEnabled="{Binding SelectedFormat, Converter={StaticResource InequalsToBooleanConverter}, ConverterParameter={x:Null}}"
                             Style="{StaticResource MaterialDesignFlatButton}">
                         <Button.CommandParameter>
                             <system:Boolean>True</system:Boolean>

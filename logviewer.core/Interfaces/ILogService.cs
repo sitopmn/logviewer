@@ -27,7 +27,14 @@ namespace logviewer.core.Interfaces
         /// Gets a list of supported formats
         /// </summary>
         IEnumerable<string> Formats { get; }
-        
+
+        /// <summary>
+        /// Detect the format of the log source
+        /// </summary>
+        /// <param name="source">Source to check</param>
+        /// <returns>Name of the format or <see cref="string.Empty"/> if it couldn't be determined</returns>
+        string Detect(string[] source);
+
         /// <summary>
         /// Loads a log from the given source with the given format
         /// </summary>

@@ -60,6 +60,7 @@
     <Compile Include="Converters\BooleanAndConverter.cs" />
     <Compile Include="Converters\BooleanInverterConverter.cs" />
     <Compile Include="Converters\EnumConverter.cs" />
+    <Compile Include="Converters\InequalsToBooleanConverter.cs" />
     <Compile Include="Converters\EqualsToBooleanConverter.cs" />
     <Compile Include="Converters\GreaterThanConverter.cs" />
     <Compile Include="Converters\LessThanConverter.cs" />

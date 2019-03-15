@@ -26,6 +26,7 @@
 
             <!--  converters  -->
             <util:EqualsToBooleanConverter x:Key="EqualsToBooleanConverter" />
+            <util:InequalsToBooleanConverter x:Key="InequalsToBooleanConverter" />
             <util:StringFormatConverter x:Key="StringFormatConverter" />
             <util:BooleanInverterConverter x:Key="BooleanInverter" />
             <util:BooleanAndConverter x:Key="BooleanAndConverter" />

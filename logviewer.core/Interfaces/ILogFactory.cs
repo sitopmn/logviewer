@@ -19,9 +19,9 @@ namespace logviewer.core.Interfaces
         string Name { get; }
 
         /// <summary>
-        /// Checks whether the given source is supported by the log factory
+        /// Checks whether the sources are supported by the log format
         /// </summary>
-        /// <param name="source">Source to check</param>
+        /// <param name="source">Sources to check</param>
         /// <returns>True if the source is supported</returns>
         bool IsSupported(string[] source);
 

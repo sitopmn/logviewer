@@ -16,7 +16,7 @@ namespace logviewer.query.Logs
     /// Factory for creating text based logs
     /// </summary>
     [Export(typeof(ILogFactory))]
-    internal class TextLogFactory : ILogFactory
+    internal class TextLogFactory : FileLogFactory
     {
         /// <summary>
         /// Application settings
@@ -30,32 +30,11 @@ namespace logviewer.query.Logs
         /// <param name="indexerFactories">List of factories for indexers</param>
         [ImportingConstructor]
         public TextLogFactory(ISettings settings)
+            : base("Unformatted Text", ".txt", ".log")
         {
             _settings = settings;
         }
-
-        /// <summary>
-        /// Gets the name of the log format
-        /// </summary>
-        public string Name => "Plain Text";
-
-        /// <summary>
-        /// Checks whether the given source can be opened by the log
-        /// </summary>
-        /// <param name="source">Source to check</param>
-        /// <returns>True if the source is supported, false otherwise</returns>
-        public bool IsSupported(string[] source)
-        {
-            try
-            {
-                return source.All(s => File.Exists(s));
-            }
-            catch
-            {
-                return false;
-            }
-        }
-
+                
         /// <summary>
         /// Creates a log from the given source
         /// </summary>
@@ -63,7 +42,7 @@ namespace logviewer.query.Logs
         /// <param name="progress">Action to report progress</param>
         /// <param name="cancellation">Token to cancel the operation</param>
         /// <returns>Log create from the source</returns>
-        public ILog Create(string[] source, Action<double> progress, CancellationToken cancellation)
+        public override ILog Create(string[] source, Action<double> progress, CancellationToken cancellation)
         {
             var index = new InvertedIndex();
             var log = new TextLog(_settings, index, new[] { index });
