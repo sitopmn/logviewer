@@ -267,6 +267,7 @@ namespace logviewer.query.Readers
             {
                 buffer[offset++] = new Token(ETokenType.Characters, _token.ToString(), File, Member, _tokenPosition);
                 count -= 1;
+                _token.Clear();
             }
 
             return total - count;
