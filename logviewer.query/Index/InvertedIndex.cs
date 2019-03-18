@@ -262,7 +262,7 @@ namespace logviewer.query.Index
         public void Complete()
         {
             // add the raw field if missing
-            if (!_fields.Contains("_raw"))
+            if (_fields.Count == 0)
             {
                 _fields.Add("_raw");
             }
