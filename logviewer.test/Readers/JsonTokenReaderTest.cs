@@ -200,11 +200,10 @@ namespace logviewer.test.Readers
             var objects = ReadTokens("{ \"key\" { false } } { \"key\" : 1234 }").ToArray();
             CheckToken(objects, 0, ETokenType.Item, 0);
             CheckToken(objects, 1, ETokenType.Characters, 3, "key");
-            CheckToken(objects, 2, ETokenType.Characters, 10, "false");
-            CheckToken(objects, 3, ETokenType.Item, 20);
-            CheckToken(objects, 4, ETokenType.Characters, 23, "key");
-            CheckToken(objects, 5, ETokenType.Field, 0, "key");
-            CheckToken(objects, 6, ETokenType.Characters, 30, "1234");
+            CheckToken(objects, 2, ETokenType.Item, 20);
+            CheckToken(objects, 3, ETokenType.Characters, 23, "key");
+            CheckToken(objects, 4, ETokenType.Field, 0, "key");
+            CheckToken(objects, 5, ETokenType.Characters, 30, "1234");
         }
 
         [TestMethod]

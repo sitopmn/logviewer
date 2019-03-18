@@ -42,6 +42,11 @@ namespace logviewer.query.Readers
         /// Position of the item
         /// </summary>
         private long _position;
+
+        /// <summary>
+        /// Number of nested arrays
+        /// </summary>
+        private int _arrayLevel;
         
         /// <summary>
         /// Initializes a new instance of the <see cref="JsonReader{T}"/> class
@@ -72,6 +77,7 @@ namespace logviewer.query.Readers
             _property.Clear();
             _value.Clear();
             _position = position;
+            _arrayLevel = 0;
             return offset;
         }
 
@@ -161,10 +167,34 @@ namespace logviewer.query.Readers
             return offset;
         }
 
+        /// <summary>
+        /// The reader encountered the start of an array
+        /// </summary>
+        /// <param name="buffer">Buffer for storing tokens</param>
+        /// <param name="offset">Offset of the next token to store into the buffer</param>
+        /// <returns>Offset to store the next token into the buffer</returns>
+        protected override int OnArrayStart(ILogItem[] buffer, int offset)
+        {
+            _arrayLevel += 1;
+            return offset;
+        }
+
+        /// <summary>
+        /// The reader encountered the end of an array
+        /// </summary>
+        /// <param name="buffer">Buffer for storing tokens</param>
+        /// <param name="offset">Offset of the next token to store into the buffer</param>
+        /// <returns>Offset to store the next token into the buffer</returns>
+        protected override int OnArrayEnd(ILogItem[] buffer, int offset)
+        {
+            _arrayLevel -= 1;
+            return offset;
+        }
+
         #endregion
 
         #region read property values
-        
+
         /// <summary>
         /// The reader encountered a string value
         /// </summary>
@@ -199,7 +229,11 @@ namespace logviewer.query.Readers
         /// <returns>Offset to store the next token into the buffer</returns>
         protected override int OnValueEnd(ILogItem[] buffer, int offset)
         {
-            _fields[CreateFieldName()] = _value.ToString();
+            if (_arrayLevel == 0)
+            {
+                _fields[CreateFieldName()] = _value.ToString();
+            }
+
             return offset;
         }
 

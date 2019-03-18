@@ -86,12 +86,13 @@ namespace logviewer.test.Readers
         [TestMethod]
         public void ArrayInObjectSkipped()
         {
-            var objects = ReadObjects("{ \"key\":1234, \"array\":[1, 2, 3, [ true, false], 4, 5 ] }").ToArray();
+            var objects = ReadObjects("{ \"key\":1234, \"array\":[1, 2, 3, [ true, false], 4, 5 ], \"foo\":\"bar\" }").ToArray();
 
             Assert.AreEqual(1, objects.Length);
 
-            Assert.AreEqual(2, objects[0].Fields.Count);
+            Assert.AreEqual(3, objects[0].Fields.Count);
             Assert.AreEqual("1234", objects[0].Fields["key"]);
+            Assert.AreEqual("bar", objects[0].Fields["foo"]);
         }
 
         [TestMethod]

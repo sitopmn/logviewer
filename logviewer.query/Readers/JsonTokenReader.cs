@@ -38,6 +38,11 @@ namespace logviewer.query.Readers
         private char _previous;
 
         /// <summary>
+        /// Number of nested arrays
+        /// </summary>
+        private int _arrayLevel;
+
+        /// <summary>
         /// Initializes a new instance of the <see cref="JsonTokenReader"/> class
         /// </summary>
         /// <param name="stream">Stream providing the source data</param>
@@ -62,6 +67,7 @@ namespace logviewer.query.Readers
             _property.Clear();
             _hierarchy.Clear();
             _previous = '\0';
+            _arrayLevel = 0;
             buffer[offset++] = new Token() { Type = ETokenType.Item, File = File, Member = Member, Position = position };
             return offset;
         }
@@ -78,31 +84,58 @@ namespace logviewer.query.Readers
         /// <returns>Offset to store the next token into the buffer</returns>
         protected override int OnDocumentCharacter(Token[] buffer, int offset, char c)
         {
-            var currentIsLetter = char.IsLetter(c);
-            var currentIsDigit = char.IsDigit(c);
-            var currentIsUpper = char.IsUpper(c);
-            var previousIsLetter = char.IsLetter(_previous);
-            var previousIsDigit = char.IsDigit(_previous);
-            var previousIsUpper = char.IsUpper(_previous);
-
-            if (_token.Length > 0 && (currentIsLetter != previousIsLetter || currentIsDigit != previousIsDigit || (currentIsUpper && !previousIsUpper)))
+            if (_arrayLevel == 0)
             {
-                buffer[offset++] = new Token() { Type = ETokenType.Characters, Data = _token.ToString(), File = File, Member = Member, Position = _tokenPosition };
-                _token.Clear();
-            }
+                var currentIsLetter = char.IsLetter(c);
+                var currentIsDigit = char.IsDigit(c);
+                var currentIsUpper = char.IsUpper(c);
+                var previousIsLetter = char.IsLetter(_previous);
+                var previousIsDigit = char.IsDigit(_previous);
+                var previousIsUpper = char.IsUpper(_previous);
 
-            if (currentIsLetter || currentIsDigit)
-            {
-                if (_token.Length == 0)
+                if (_token.Length > 0 && (currentIsLetter != previousIsLetter || currentIsDigit != previousIsDigit || (currentIsUpper && !previousIsUpper)))
                 {
-                    _tokenPosition = Position;
+                    buffer[offset++] = new Token() { Type = ETokenType.Characters, Data = _token.ToString(), File = File, Member = Member, Position = _tokenPosition };
+                    _token.Clear();
                 }
 
-                _token.Append(c);
+                if (currentIsLetter || currentIsDigit)
+                {
+                    if (_token.Length == 0)
+                    {
+                        _tokenPosition = Position;
+                    }
+
+                    _token.Append(c);
+                }
+
+                _previous = c;
             }
 
-            _previous = c;
+            return offset;
+        }
 
+        /// <summary>
+        /// The reader encountered the start of an array
+        /// </summary>
+        /// <param name="buffer">Buffer for storing tokens</param>
+        /// <param name="offset">Offset of the next token to store into the buffer</param>
+        /// <returns>Offset to store the next token into the buffer</returns>
+        protected override int OnArrayStart(Token[] buffer, int offset)
+        {
+            _arrayLevel += 1;
+            return offset;
+        }
+
+        /// <summary>
+        /// The reader encountered the end of an array
+        /// </summary>
+        /// <param name="buffer">Buffer for storing tokens</param>
+        /// <param name="offset">Offset of the next token to store into the buffer</param>
+        /// <returns>Offset to store the next token into the buffer</returns>
+        protected override int OnArrayEnd(Token[] buffer, int offset)
+        {
+            _arrayLevel -= 1;
             return offset;
         }
 
@@ -160,7 +193,11 @@ namespace logviewer.query.Readers
         /// <returns>Offset to store the next token into the buffer</returns>
         protected override int OnValueStart(Token[] buffer, int offset)
         {
-            buffer[offset++] = new Token() { Type = ETokenType.Field, Data = CreateFieldName() };
+            if (_arrayLevel == 0)
+            {
+                buffer[offset++] = new Token() { Type = ETokenType.Field, Data = CreateFieldName() };
+            }
+
             return offset;
         }
         
@@ -172,7 +209,11 @@ namespace logviewer.query.Readers
         /// <returns>Offset to store the next token into the buffer</returns>
         protected override int OnObjectStart(Token[] buffer, int offset)
         {
-            _hierarchy.Add(_property.ToString());
+            if (_arrayLevel == 0)
+            {
+                _hierarchy.Add(_property.ToString());
+            }
+
             return offset;
         }
 
@@ -184,7 +225,11 @@ namespace logviewer.query.Readers
         /// <returns>Offset to store the next token into the buffer</returns>
         protected override int OnObjectEnd(Token[] buffer, int offset)
         {
-            _hierarchy.RemoveAt(_hierarchy.Count - 1);
+            if (_arrayLevel == 0)
+            {
+                _hierarchy.RemoveAt(_hierarchy.Count - 1);
+            }
+
             return offset;
         }
 

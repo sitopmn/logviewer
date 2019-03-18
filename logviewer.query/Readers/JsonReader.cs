@@ -9,17 +9,54 @@ namespace logviewer.query.Readers
 {
     internal abstract class JsonReader<T> : LogReader<T>
     {
-        private readonly Stack<State> _history = new Stack<State>();
+        /// <summary>
+        /// States which process characters as document characters
+        /// </summary>
+        private readonly State[] _documentStates = new State[]
+                {
+                    State.KeyStart,
+                    State.KeyCharacters,
+                    State.KeyValueSeparator,
+                    State.KeyEscape,
+                    State.ValueStart,
+                    State.ValueLiteral,
+                    State.ValueString,
+                    State.ValueStringEscape,
+                    State.ValueEnd
+                };
 
-        private int _level = 0;
+        /// <summary>
+        /// Context stack of the parser
+        /// </summary>
+        private readonly Stack<Context> _context = new Stack<Context>();
         
-        private State _state = State.Document;
+        /// <summary>
+        /// Current state of the parser
+        /// </summary>
+        private State _state = State.Root;
 
+        /// <summary>
+        /// Number of braces within the current document
+        /// </summary>
+        private int _braces = 0;
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="JsonReader{T}"/> class
+        /// </summary>
+        /// <param name="stream">Stream to read from</param>
+        /// <param name="encoding">Encoding of the source stream</param>
+        /// <param name="file">Name of the source file</param>
+        /// <param name="member">Archive member if the source is an archive</param>
         protected JsonReader(Stream stream, Encoding encoding, string file, string member) 
             : base(stream, encoding, file, member)
         {
+            _context.Push(Context.Root);
         }
 
+        /// <summary>
+        /// Reads a single item
+        /// </summary>
+        /// <returns>Item read from the source</returns>
         public override T Read()
         {
             var buffer = new T[1];
@@ -33,66 +70,71 @@ namespace logviewer.query.Readers
             }
         }
 
+        /// <summary>
+        /// Reads multiple items into a buffer
+        /// </summary>
+        /// <param name="buffer">Buffer to read into</param>
+        /// <param name="offset">Offset of the first item in the target buffer</param>
+        /// <param name="count">Number of items to read</param>
+        /// <returns>Number of items read into the buffer</returns>
         public override int Read(T[] buffer, int offset, int count)
         {
-            var end = offset + count;
             var index = offset;
-            while (index < end)
+
+            while (index < offset + count)
             {
                 var r = ReadChar();
-                if (r < 0)
+                if (r < 0) break;
+                var c = (char)r;
+
+                // count opening and closing braces
+                if (c == '{')
                 {
-                    break;
+                    _braces += 1;
+                }
+                else if (c == '}')
+                {
+                    _braces -= 1;
                 }
 
-                var c = (char)r;
+                // state machine to parse the input
                 switch (_state)
                 {
-                    // expect the start of an item
-                    case State.Document:
+                    case State.Root:
                         if (c == '{')
                         {
-                            _level += 1;
-                            _history.Push(State.Document);
+                            _braces = 1;
                             _state = State.KeyStart;
+                            _context.Push(Context.Object);
                             index = OnDocumentStart(buffer, index, Position);
                         }
                         else if (c == '/')
                         {
-                            _history.Push(State.Document);
                             _state = State.Comment;
                         }
                         break;
-
-                    // expect the start of a key
+                        
                     case State.KeyStart:
                         if (c == '"')
                         {
-                            _state = State.Key;
+                            _state = State.KeyCharacters;
                             index = OnPropertyStart(buffer, index);
                         }
-                        else if (c == '/')
+                        else if (!char.IsWhiteSpace(c))
                         {
-                            _state = State.Comment;
-                            _history.Push(State.KeyStart);
-                        }
-                        else if (c == '}')
-                        {
-                            goto case State.ValueEnd;
-                        }
-                        else if (!char.IsWhiteSpace((char)c))
-                        {
-                            _state = State.Skip;
-                            goto case State.Skip;
+                            _state = State.Error;
                         }
                         break;
 
-                    // characters in a key
-                    case State.Key:
+                    case State.KeyCharacters:
                         if (c == '"')
                         {
                             _state = State.KeyValueSeparator;
                             index = OnPropertyEnd(buffer, index);
+                        }
+                        else if (c == '\\')
+                        {
+                            _state = State.KeyEscape;
                         }
                         else
                         {
@@ -100,79 +142,54 @@ namespace logviewer.query.Readers
                         }
                         break;
 
-                    // expect a separator between a key and a value
+                    case State.KeyEscape:
+                        _state = State.KeyCharacters;
+                        index = OnPropertyCharacter(buffer, index, c);
+                        break;
+
                     case State.KeyValueSeparator:
                         if (c == ':')
                         {
                             _state = State.ValueStart;
                         }
-                        else if (c == '/')
+                        else if (!char.IsWhiteSpace(c))
                         {
-                            _history.Push(State.KeyValueSeparator);
-                            _state = State.Comment;
-                        }
-                        else if (!char.IsWhiteSpace((char)c))
-                        {
-                            _state = State.Skip;
-                            goto case State.Skip;
+                            _state = State.Error;
                         }
                         break;
 
                     case State.ValueStart:
-                        if (c == '{')
+                        if (c == '"')
                         {
-                            _level += 1;
-                            index = OnObjectStart(buffer, index);
-                            _history.Push(State.ValueEnd);
-                            _state = State.KeyStart;
+                            _state = State.ValueString;
+                            index = OnValueStart(buffer, index);
                         }
-                        else if (c == '}')
+                        else if (c == '{')
                         {
-                            goto case State.ValueEnd;
+                            _context.Push(Context.Object);
+                            index = OnObjectStart(buffer, index);
+                            _state = State.KeyStart;
                         }
                         else if (c == '[')
                         {
-                            _state = State.Skip;
-                            goto case State.Skip;
+                            _context.Push(Context.Array);
+                            index = OnArrayStart(buffer, index);
+                            _state = State.ValueStart;
                         }
-                        else if (c == '"')
+                        else if (!char.IsWhiteSpace(c))
                         {
-                            index = OnValueStart(buffer, index);
-                            _state = State.String;
-                        }
-                        else if (c == '/')
-                        {
-                            _history.Push(State.ValueStart);
-                            _state = State.Comment;
-                        }
-                        else if (char.IsLetter(c) || char.IsDigit(c))
-                        {
+                            _state = State.ValueLiteral;
                             index = OnValueStart(buffer, index);
                             index = OnValueCharacter(buffer, index, c);
-                            _state = State.Literal;
                         }
-                        else if (!char.IsWhiteSpace((char)c))
+
+                        if (_state != State.ValueStart && _context.Peek() == Context.Array)
                         {
-                            index = OnValueStart(buffer, index);
-                            index = OnValueCharacter(buffer, index, c);
-                            _state = State.Literal;
+                            index = OnArrayItem(buffer, index);
                         }
                         break;
 
-                    case State.Literal:
-                        if (char.IsWhiteSpace((char)c) || c == ',' || c == '}')
-                        {
-                            index = OnValueEnd(buffer, index);
-                            _state = State.ValueEnd;
-                            goto case State.ValueEnd;
-                        }
-                        else
-                        {
-                            index = OnValueCharacter(buffer, index, c);
-                        }
-                        break;
-
-                    case State.String:
+                    case State.ValueString:
                         if (c == '"')
                         {
                             _state = State.ValueEnd;
@@ -180,7 +197,7 @@ namespace logviewer.query.Readers
                         }
                         else if (c == '\\')
                         {
-                            _state = State.StringEscape;
+                            _state = State.ValueStringEscape;
                         }
                         else
                         {
@@ -188,43 +205,70 @@ namespace logviewer.query.Readers
                         }
                         break;
 
-                    case State.StringEscape:
+                    case State.ValueStringEscape:
+                        _state = State.ValueString;
                         index = OnValueCharacter(buffer, index, c);
-                        _state = State.String;
+                        break;
+
+                    case State.ValueLiteral:
+                        if (char.IsWhiteSpace(c) || c == '}' || c == ']' || c == ',')
+                        {
+                            _state = State.ValueEnd;
+                            index = OnValueEnd(buffer, index);
+                            goto case State.ValueEnd;
+                        }
+                        else
+                        {
+                            index = OnValueCharacter(buffer, index, c);
+                        }
                         break;
 
                     case State.ValueEnd:
-                        if (c == ',')
+                        if (_context.Peek() == Context.Object)
                         {
-                            _state = State.KeyStart;
-                        }
-                        else if (c == '}')
-                        {
-                            _level -= 1;
-                            _state = _history.Pop();
-                            if (_level == 0)
+                            if (c == '}')
                             {
-                                index = OnDocumentCharacter(buffer, index, c);
-                                index = OnDocumentEnd(buffer, index);
+                                _context.Pop();
+                                if (_context.Peek() == Context.Root)
+                                {
+                                    index = OnDocumentEnd(buffer, index);
+                                    _state = State.Root;
+                                }
+                                else
+                                {
+                                    index = OnObjectEnd(buffer, index);
+                                    _state = State.ValueEnd;
+                                }
                             }
-                            else
+                            else if (c == ',')
                             {
-                                index = OnObjectEnd(buffer, index);
+                                _state = State.KeyStart;
+                            }
+                            else if (!char.IsWhiteSpace(c))
+                            {
+                                _state = State.Error;
                             }
                         }
-                        else if (c == '/')
+                        else if (_context.Peek() == Context.Array)
                         {
-                            _history.Push(State.ValueEnd);
-                            _state = State.Comment;
-                        }
-                        else if (!char.IsWhiteSpace((char)c))
-                        {
-                            _state = State.Skip;
-                            goto case State.Skip;
+                            if (c == ']')
+                            {
+                                _context.Pop();
+                                index = OnArrayEnd(buffer, index);
+                                _state = State.ValueEnd;
+                            }
+                            else if (c == ',')
+                            {
+                                index = OnArrayItem(buffer, index);
+                                _state = State.ValueStart;
+                            }
+                            else if (!char.IsWhiteSpace(c))
+                            {
+                                _state = State.Error;
+                            }
                         }
                         break;
 
-                    // first character of a comment seen
                     case State.Comment:
                         if (c == '/')
                         {
@@ -236,20 +280,24 @@ namespace logviewer.query.Readers
                         }
                         else
                         {
-                            _state = State.Skip;
-                            goto case State.Skip;
+                            _state = State.Error;
                         }
                         break;
 
-                    // the rest of the line is a comment
                     case State.CommentLine:
-                        if (c == '\n' || c == '\r')
+                        if (c == '\r' || c == '\n')
                         {
-                            _state = _history.Pop();
+                            if (_context.Peek() == Context.Root)
+                            {
+                                _state = State.Root;
+                            }
+                            else
+                            {
+                                _state = State.Error;
+                            }
                         }
                         break;
 
-                    // first termination character of the block comment
                     case State.CommentBlock:
                         if (c == '*')
                         {
@@ -257,11 +305,17 @@ namespace logviewer.query.Readers
                         }
                         break;
 
-                    // second termination character of the block comment
                     case State.CommentBlockEnd:
                         if (c == '/')
                         {
-                            _state = _history.Pop();
+                            if (_context.Peek() == Context.Root)
+                            {
+                                _state = State.Root;
+                            }
+                            else
+                            {
+                                _state = State.Error;
+                            }
                         }
                         else
                         {
@@ -269,43 +323,18 @@ namespace logviewer.query.Readers
                         }
                         break;
 
-                    // skip out of the current item
-                    case State.Skip:
-                        if (c == '}')
+                    case State.Error:
+                        if (_braces == 0)
                         {
-                            if (_level > 0)
-                            {
-                                _level -= 1;
-                            }
-
-                            if (_level == 0)
-                            {
-                                _state = State.Document;
-                                index = OnDocumentCharacter(buffer, index, c);
-                                index = OnDocumentEnd(buffer, index);
-                            }
-                        }
-                        else if (c == '{' && _level > 0)
-                        {
-                            _level += 1;
-                        }
-                        else if (c == '/')
-                        {
-                            _history.Push(State.Skip);
-                            _state = State.Comment;
+                            index = OnDocumentEnd(buffer, index);
+                            _state = State.Root;
+                            _context.Clear();
+                            _context.Push(Context.Root);
                         }
                         break;
                 }
-
-                if (_state == State.KeyStart ||
-                    _state == State.Key ||
-                    _state == State.KeyValueSeparator ||
-                    _state == State.ValueStart ||
-                    _state == State.String ||
-                    _state == State.StringEscape ||
-                    _state == State.Literal ||
-                    _state == State.ValueEnd ||
-                    _state == State.Skip)
+                // process all document characters
+                if (Array.IndexOf(_documentStates, _state) >= 0)
                 {
                     index = OnDocumentCharacter(buffer, index, c);
                 }
@@ -323,6 +352,10 @@ namespace logviewer.query.Readers
         protected virtual int OnPropertyCharacter(T[] buffer, int offset, char c) => offset;
         protected virtual int OnPropertyEnd(T[] buffer, int offset) => offset;
 
+        protected virtual int OnArrayStart(T[] buffer, int offset) => offset;
+        protected virtual int OnArrayItem(T[] buffer, int offset) => offset;
+        protected virtual int OnArrayEnd(T[] buffer, int offset) => offset;
+
         protected virtual int OnValueStart(T[] buffer, int offset) => offset;
         protected virtual int OnValueCharacter(T[] buffer, int offset, char c) => offset;
         protected virtual int OnValueEnd(T[] buffer, int offset) => offset;
@@ -331,22 +364,36 @@ namespace logviewer.query.Readers
 
         protected virtual int OnDocumentEnd(T[] buffer, int offset) => offset;
 
+        /// <summary>
+        /// Enumeration of the states of the parser
+        /// </summary>
         private enum State
         {
-            Document,
-            KeyStart,
-            Key,
-            KeyValueSeparator,
-            ValueStart,
-            String,
-            StringEscape,
-            Literal,
-            ValueEnd,
-            Skip,
+            Root,
             Comment,
             CommentLine,
             CommentBlock,
             CommentBlockEnd,
+            Error,
+            KeyStart,
+            KeyCharacters,
+            KeyValueSeparator,
+            KeyEscape,
+            ValueStart,
+            ValueLiteral,
+            ValueString,
+            ValueStringEscape,
+            ValueEnd
+        }
+
+        /// <summary>
+        /// Enumeration of parser contexts
+        /// </summary>
+        private enum Context
+        {
+            Root,
+            Object,
+            Array,
         }
     }
 }
