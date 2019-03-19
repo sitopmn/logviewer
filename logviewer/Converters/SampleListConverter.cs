@@ -71,6 +71,10 @@ namespace logviewer.Converters
             {
                 return ((DateTime?)value).Value.Ticks;
             }
+            else if (sourceType == typeof(TimeSpan?))
+            {
+                return ((TimeSpan?)value).Value.TotalSeconds;
+            }
             else
             {
                 return System.Convert.ToDouble(value, CultureInfo.InvariantCulture);
