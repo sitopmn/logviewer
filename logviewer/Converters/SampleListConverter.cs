@@ -39,7 +39,7 @@ namespace logviewer.Converters
                     .Cast<ILogItem>()
                     .Select((item, index) => new { item, index })
                     .Where(i => i.item != null && i.item.Fields != null && i.item.Fields.ContainsKey(xField) && i.item.Fields[xField] != null && i.item.Fields.ContainsKey(yField) && i.item.Fields[yField] != null)
-                    .Select(i => new DataPoint(ConvertValue(i.item.Fields[xField], axis.DisplayType), ConvertValue(i.item.Fields[yField], column.DisplayType)) { UserData = i.index })
+                    .TrySelect(i => new DataPoint(ConvertValue(i.item.Fields[xField], axis.DisplayType), ConvertValue(i.item.Fields[yField], column.DisplayType)) { UserData = i.index })
                     .ToList();
             }
             else

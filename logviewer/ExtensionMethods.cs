@@ -32,6 +32,32 @@ namespace logviewer
         }
 
         /// <summary>
+        /// Selects items of an enumerable and skips when the selector throws an exception
+        /// </summary>
+        /// <typeparam name="TSource">Element type of the source enumerable</typeparam>
+        /// <typeparam name="TResult">Element type of the result enumerable</typeparam>
+        /// <param name="source">Source enumerable</param>
+        /// <param name="selector">Selector to apply to the elements of the source enumerable</param>
+        /// <returns>Result enumerable</returns>
+        public static IEnumerable<TResult> TrySelect<TSource, TResult>(this IEnumerable<TSource> source, Func<TSource, TResult> selector)
+        {
+            foreach (var i in source)
+            {
+                TResult r;
+                try
+                {
+                    r = selector(i);
+                }
+                catch
+                {
+                    continue;
+                }
+
+                yield return r;
+            }
+        }
+
+        /// <summary>
         /// Escapes a binding property path for binding to query result items
         /// </summary>
         /// <param name="input">The input path</param>
